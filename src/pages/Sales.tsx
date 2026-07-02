@@ -1,31 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
 import { initialProducts } from '../data/products'
 import SaleFormModal from '../components/SaleFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
-let nextId = 7
-
 export default function Sales() {
-  const { sales, addSale, removeSale } = useBusiness()
+  const { sales, addSale, removeSale, loading } = useBusiness()
   const [modalOpen, setModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<typeof sales[number] | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleSave = (data: { date: string; product: string; quantity: number; total: number }) => {
-    addSale({ id: String(nextId++), ...data })
+  const handleSave = async (data: { date: string; product: string; quantity: number; total: number }) => {
+    await addSale(data)
     setModalOpen(false)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    removeSale(deleteTarget.id)
+    await removeSale(deleteTarget.id)
     setDeleteTarget(null)
   }
 

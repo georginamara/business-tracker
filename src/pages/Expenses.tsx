@@ -1,30 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
 import ExpenseFormModal from '../components/ExpenseFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
-let nextId = 9
-
 export default function Expenses() {
-  const { expenses, addExpense, removeExpense } = useBusiness()
+  const { expenses, addExpense, removeExpense, loading } = useBusiness()
   const [modalOpen, setModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<typeof expenses[number] | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleSave = (data: { name: string; category: string; amount: number; date: string }) => {
-    addExpense({ id: String(nextId++), ...data })
+  const handleSave = async (data: { name: string; category: string; amount: number; date: string }) => {
+    await addExpense(data)
     setModalOpen(false)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
-    removeExpense(deleteTarget.id)
+    await removeExpense(deleteTarget.id)
     setDeleteTarget(null)
   }
 

@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
 import DashboardCard from '../components/DashboardCard'
 import { CardSkeleton } from '../components/Skeleton'
+import SalesOverviewChart from '../components/SalesOverviewChart'
+import RevenueExpensesChart from '../components/RevenueExpensesChart'
+import ExpenseCategoriesChart from '../components/ExpenseCategoriesChart'
 import { recentSales, lowStockProducts } from '../data/dashboard'
 
 function formatCurrency(amount: number): string {
@@ -9,13 +11,7 @@ function formatCurrency(amount: number): string {
 }
 
 export default function Dashboard() {
-  const { dashboardStats } = useBusiness()
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(timer)
-  }, [])
+  const { dashboardStats, loading } = useBusiness()
 
   if (loading) {
     return (
@@ -25,6 +21,17 @@ export default function Dashboard() {
           {Array.from({ length: 5 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 xl:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+          </div>
+          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
+            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+          </div>
         </div>
       </div>
     )
@@ -85,6 +92,18 @@ export default function Dashboard() {
             </svg>
           }
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 xl:col-span-2">
+          <SalesOverviewChart />
+        </div>
+        <div className="lg:col-span-2 xl:col-span-1">
+          <ExpenseCategoriesChart />
+        </div>
+        <div className="lg:col-span-2">
+          <RevenueExpensesChart />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

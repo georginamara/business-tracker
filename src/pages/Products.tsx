@@ -1,36 +1,37 @@
 import { useEffect, useState } from 'react'
 import type { Product } from '../data/products'
-import { initialProducts } from '../data/products'
+import { fetchAll, createDocument, updateDocument, deleteDocument } from '../lib/firestore'
 import ProductFormModal from '../components/ProductFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
-let nextId = 9
-
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(timer)
+    fetchAll<Product>('products').then((data) => {
+      setProducts(data)
+    }).finally(() => setLoading(false))
   }, [])
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleSave = (data: Omit<Product, 'id'>) => {
+  const handleSave = async (data: Omit<Product, 'id'>) => {
     if (editingProduct) {
+      await updateDocument('products', editingProduct.id, data as Record<string, unknown>)
       setProducts((prev) =>
         prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
       )
     } else {
-      setProducts((prev) => [...prev, { id: String(nextId++), ...data }])
+      const id = await createDocument('products', data as Record<string, unknown>)
+      setProducts((prev) => [...prev, { id, ...data }])
     }
     setModalOpen(false)
     setEditingProduct(null)
@@ -41,8 +42,9 @@ export default function Products() {
     setModalOpen(true)
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return
+    await deleteDocument('products', deleteTarget.id)
     setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id))
     setDeleteTarget(null)
   }
