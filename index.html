@@ -173,39 +173,9 @@
       text-align: right;
       font-size: 20px;
       color: #c2185b;
-    }
-    .sticker-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       margin-top: 28px;
-      flex-wrap: wrap;
-      gap: 12px;
     }
-    .matcha-sticker {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #e8f5e9;
-      border: 2px dashed #81c784;
-      border-radius: 30px;
-      padding: 6px 18px 6px 14px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #2e7d32;
-      transform: rotate(-3deg);
-      box-shadow: 0 2px 12px rgba(129,199,132,0.25);
-      animation: stickerFloat 3s ease-in-out infinite;
-    }
-    .matcha-sticker span {
-      font-family: 'Quicksand', sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-    }
-    @keyframes stickerFloat {
-      0%, 100% { transform: rotate(-3deg) translateY(0); }
-      50% { transform: rotate(-3deg) translateY(-4px); }
-    }
+
 
     .music-section {
       background: #fff8f8;
@@ -342,27 +312,21 @@
     </section>
 
     <section class="letter-section">
-      <h2 id="loveTitle">Hi madam baby!</h2>
+      <h2 id="loveTitle">Hi, baby. 🤍</h2>
       <div class="sub" id="loveSub">A letter from the heart</div>
       <p id="letterP1">
         I honestly never expected someone to become this important to me. What started as simple conversations and random little moments slowly turned into something I look forward to every single day. Somewhere along the way, without even realizing it, you became my favorite person to talk to.
       </p>
       <p id="letterP2">
-        One of the things I love most about us is how easy everything feels. Nothing ever has to be perfect. Just being with you, talking to you, or even sharing the smallest moments somehow makes my day better. It's funny how the little things you do—things you probably don't even notice—end up meaning the most to me.
+        One of the things I love most about us is how easy everything feels. You don't have to do anything extraordinary—just being yourself is already enough to make my day a little better. It's funny how the little things you do, things you probably don't even notice, end up meaning the most to me.
       </p>
       <p id="letterP3">
-        That's why I wanted to make something like this. A small place where we can keep the moments we've shared, no matter how ordinary they seem right now. Because I have a feeling that one day, we'll look back at all of this and realize these were the moments that quietly became our favorites.
+        That's why I wanted to make something like this. A little space where we can keep the moments we've shared, no matter how ordinary they seem right now. I have a feeling that one day, we'll look back at all of this and smile because these little moments were where everything started.
       </p>
       <p id="letterP4">
-Thank you for being someone who makes life feel lighter, happier, and a little more beautiful just by being in it. No pressure, no expectations—I just hope we keep making memories together, one day at a time.
+        Thank you for making my days a little brighter without even trying. I don't know if you realize it, but you really do make a difference. I'm looking forward to making more memories with you, baby. 🤍
       </p>
-      <p id="letterP5">
-        I can't wait for all the moments we haven't made yet, baby. 🤍
-      </p>
-      <div class="sticker-row">
-        <div class="matcha-sticker">🍵<span>matcha lover</span></div>
-        <div class="signature" id="letterSig">Georgi</div>
-      </div>
+      <div class="signature" id="letterSig">Georgi</div>
     </section>
 
     <div class="footer">
@@ -372,13 +336,12 @@ Thank you for being someone who makes life feel lighter, happier, and a little m
 
   <script>
     const CONFIG = {
-      title: "Hi madam baby!",
+      title: "Hi, baby. 🤍",
       subtitle: "A letter from the heart",
       paragraph1: `I honestly never expected someone to become this important to me. What started as simple conversations and random little moments slowly turned into something I look forward to every single day. Somewhere along the way, without even realizing it, you became my favorite person to talk to.`,
-      paragraph2: `One of the things I love most about us is how easy everything feels. Nothing ever has to be perfect. Just being with you, talking to you, or even sharing the smallest moments somehow makes my day better. It's funny how the little things you do—things you probably don't even notice—end up meaning the most to me.`,
-      paragraph3: `That's why I wanted to make something like this. A small place where we can keep the moments we've shared, no matter how ordinary they seem right now. Because I have a feeling that one day, we'll look back at all of this and realize these were the moments that quietly became our favorites.`,
-      paragraph4: `Thank you for being someone who makes life feel lighter, happier, and a little more beautiful just by being in it. No pressure, no expectations—I just hope we keep making memories together, one day at a time.`,
-      paragraph5: `I can't wait for all the moments we haven't made yet, baby. 🤍`,
+      paragraph2: `One of the things I love most about us is how easy everything feels. You don't have to do anything extraordinary—just being yourself is already enough to make my day a little better. It's funny how the little things you do, things you probably don't even notice, end up meaning the most to me.`,
+      paragraph3: `That's why I wanted to make something like this. A little space where we can keep the moments we've shared, no matter how ordinary they seem right now. I have a feeling that one day, we'll look back at all of this and smile because these little moments were where everything started.`,
+      paragraph4: `Thank you for making my days a little brighter without even trying. I don't know if you realize it, but you really do make a difference. I'm looking forward to making more memories with you, baby. 🤍`,
       signature: "Georgi",
       youtubeId: "CFldhT56kjY",
       startSec: 266,
@@ -428,7 +391,6 @@ Thank you for being someone who makes life feel lighter, happier, and a little m
     document.getElementById('letterP2').textContent = CONFIG.paragraph2;
     document.getElementById('letterP3').textContent = CONFIG.paragraph3;
     document.getElementById('letterP4').textContent = CONFIG.paragraph4;
-    document.getElementById('letterP5').textContent = CONFIG.paragraph5;
     document.getElementById('letterSig').textContent = CONFIG.signature;
 
     const tag = document.createElement('script');
