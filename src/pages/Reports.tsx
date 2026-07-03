@@ -183,7 +183,7 @@ export default function Reports() {
 
   const generatePDF = useCallback(async () => {
     const { default: jsPDF } = await import('jspdf')
-    await import('jspdf-autotable')
+    const { autoTable } = await import('jspdf-autotable')
     const doc = new jsPDF()
     const sym = { PHP: '₱', USD: '$', EUR: '€', GBP: '£', JPY: '¥' }[currency] || '$'
 
@@ -199,7 +199,7 @@ export default function Reports() {
     const startY = store?.ownerName ? 50 : 44
     doc.setFontSize(12)
     doc.text('Summary', 14, startY)
-    doc.autoTable({
+    autoTable(doc, {
       startY: startY + 4,
       head: [['Metric', 'Value']],
       body: [
@@ -213,10 +213,12 @@ export default function Reports() {
       headStyles: { fillColor: [99, 102, 241] },
     })
 
+    const lastY = (): number => doc.lastAutoTable?.finalY ?? 0
+
     if (bestSellers.length > 0) {
-      doc.text('Best Selling Products', 14, (doc as any).lastAutoTable.finalY + 12)
-      doc.autoTable({
-        startY: (doc as any).lastAutoTable.finalY + 16,
+      doc.text('Best Selling Products', 14, lastY() + 12)
+      autoTable(doc, {
+        startY: lastY() + 16,
         head: [['Product', 'Quantity Sold', `Revenue (${currency})`]],
         body: bestSellers.map((b) => [b.productName, String(b.quantity), `${sym}${b.revenue.toFixed(2)}`]),
         theme: 'striped',
@@ -225,9 +227,9 @@ export default function Reports() {
     }
 
     if (lowStockProducts.length > 0) {
-      doc.text('Low Stock Products', 14, (doc as any).lastAutoTable.finalY + 12)
-      doc.autoTable({
-        startY: (doc as any).lastAutoTable.finalY + 16,
+      doc.text('Low Stock Products', 14, lastY() + 12)
+      autoTable(doc, {
+        startY: lastY() + 16,
         head: [['Product', 'Stock']],
         body: lowStockProducts.map((p) => [p.name, String(p.stock)]),
         theme: 'striped',
@@ -235,9 +237,9 @@ export default function Reports() {
       })
     }
 
-    doc.text('Daily Breakdown', 14, (doc as any).lastAutoTable.finalY + 12)
-    doc.autoTable({
-      startY: (doc as any).lastAutoTable.finalY + 16,
+    doc.text('Daily Breakdown', 14, lastY() + 12)
+    autoTable(doc, {
+      startY: lastY() + 16,
       head: [['Date', `Revenue (${currency})`, `Expenses (${currency})`]],
       body: chartData.map((d) => [d.date, `${sym}${d.revenue.toFixed(2)}`, `${sym}${d.expenses.toFixed(2)}`]),
       theme: 'striped',
