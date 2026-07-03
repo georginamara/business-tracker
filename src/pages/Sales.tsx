@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
-import { initialProducts } from '../data/products'
 import SaleFormModal from '../components/SaleFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
+import type { Sale } from '../data/sales'
 
 export default function Sales() {
-  const { sales, addSale, removeSale, loading } = useBusiness()
+  const { products, sales, addSale, removeSale, loading } = useBusiness()
   const [modalOpen, setModalOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<typeof sales[number] | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null)
 
-  const handleSave = async (data: { date: string; product: string; quantity: number; total: number }) => {
+  const handleSave = async (data: Omit<Sale, 'id'>) => {
     await addSale(data)
     setModalOpen(false)
   }
@@ -72,8 +72,7 @@ export default function Sales() {
               <thead>
                 <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
                   <th className="px-5 py-4">Date</th>
-                  <th className="px-5 py-4">Product</th>
-                  <th className="px-5 py-4">Quantity</th>
+                  <th className="px-5 py-4">Items</th>
                   <th className="px-5 py-4 text-right">Total</th>
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
@@ -81,13 +80,22 @@ export default function Sales() {
               <tbody className="divide-y divide-gray-100">
                 {sales.map((sale) => (
                   <tr key={sale.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 text-gray-600">{sale.date}</td>
-                    <td className="px-5 py-4 font-medium text-gray-900">{sale.product}</td>
-                    <td className="px-5 py-4 text-gray-600">{sale.quantity}</td>
-                    <td className="px-5 py-4 text-right text-gray-900 font-medium">
+                    <td className="px-5 py-4 text-gray-600 align-top">{sale.date}</td>
+                    <td className="px-5 py-4">
+                      <div className="space-y-1">
+                        {sale.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="font-medium text-gray-900">{item.productName}</span>
+                            <span className="text-gray-400">x{item.quantity}</span>
+                            <span className="text-gray-500 ml-auto">${item.subtotal.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-right text-gray-900 font-medium align-top">
                       ${sale.total.toFixed(2)}
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-5 py-4 text-right align-top">
                       <button
                         onClick={() => setDeleteTarget(sale)}
                         className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
@@ -98,7 +106,7 @@ export default function Sales() {
                   </tr>
                 ))}
                 <tr className="bg-gray-50/80 font-semibold">
-                  <td colSpan={3} className="px-5 py-4 text-gray-700">Total</td>
+                  <td colSpan={2} className="px-5 py-4 text-gray-700">Total</td>
                   <td className="px-5 py-4 text-right text-gray-900">${grandTotal.toFixed(2)}</td>
                   <td />
                 </tr>
@@ -113,7 +121,7 @@ export default function Sales() {
 
       <SaleFormModal
         open={modalOpen}
-        products={initialProducts}
+        products={products}
         onSave={handleSave}
         onClose={() => setModalOpen(false)}
       />
@@ -128,7 +136,7 @@ export default function Sales() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Delete Sale</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
-              Are you sure you want to delete the sale of <strong className="text-gray-700">{deleteTarget.product}</strong>? This action cannot be undone.
+              Are you sure you want to delete this sale from <strong className="text-gray-700">{deleteTarget.date}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-3">
               <button

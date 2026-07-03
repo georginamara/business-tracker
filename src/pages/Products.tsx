@@ -1,36 +1,60 @@
 import { useEffect, useState } from 'react'
+import { where } from 'firebase/firestore'
+import { useAuth } from '../hooks/useAuth'
+import { useStore } from '../hooks/useStore'
 import type { Product } from '../data/products'
 import { fetchAll, createDocument, updateDocument, deleteDocument } from '../lib/firestore'
+import { seedDatabase } from '../lib/seed'
 import ProductFormModal from '../components/ProductFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
 export default function Products() {
+  const { user } = useAuth()
+  const { store } = useStore()
+  const uid = user?.uid
+  const threshold = store?.lowStockThreshold ?? 5
+
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [seeding, setSeeding] = useState(false)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
 
   useEffect(() => {
-    fetchAll<Product>('products').then((data) => {
+    if (!uid) return
+    fetchAll<Product>('products', where('ownerId', '==', uid)).then((data) => {
       setProducts(data)
     }).finally(() => setLoading(false))
-  }, [])
+  }, [uid])
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  const handleSeed = async () => {
+    if (!uid) return
+    setSeeding(true)
+    try {
+      await seedDatabase(uid)
+      const data = await fetchAll<Product>('products', where('ownerId', '==', uid))
+      setProducts(data)
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   const handleSave = async (data: Omit<Product, 'id'>) => {
+    if (!uid) return
     if (editingProduct) {
       await updateDocument('products', editingProduct.id, data as Record<string, unknown>)
       setProducts((prev) =>
         prev.map((p) => (p.id === editingProduct.id ? { ...p, ...data } : p))
       )
     } else {
-      const id = await createDocument('products', data as Record<string, unknown>)
+      const id = await createDocument('products', { ...data, ownerId: uid } as Record<string, unknown>)
       setProducts((prev) => [...prev, { id, ...data }])
     }
     setModalOpen(false)
@@ -58,15 +82,39 @@ export default function Products() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Products</h2>
-        <button
-          onClick={openAdd}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-all duration-150 shadow-sm hover:shadow-md"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add Product
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSeed}
+            disabled={seeding}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-150 shadow-sm"
+          >
+            {seeding ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Seeding…
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Seed Database
+              </>
+            )}
+          </button>
+          <button
+            onClick={openAdd}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-all duration-150 shadow-sm hover:shadow-md"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Product
+          </button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
@@ -108,15 +156,39 @@ export default function Products() {
             description={search ? 'Try a different search term.' : 'Add your first product to get started.'}
             action={
               !search ? (
-                <button
-                  onClick={openAdd}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Product
-                </button>
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={handleSeed}
+                    disabled={seeding}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                  >
+                    {seeding ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Seeding…
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Seed Database
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={openAdd}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Product
+                  </button>
+                </div>
               ) : undefined
             }
           />
@@ -148,13 +220,13 @@ export default function Products() {
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                        product.stock <= 5
+                        product.stock <= threshold
                           ? 'bg-red-50 text-red-700'
-                          : product.stock <= 15
+                          : product.stock <= threshold * 3
                           ? 'bg-amber-50 text-amber-700'
                           : 'bg-green-50 text-green-700'
                       }`}>
-                        {product.stock <= 5 && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                        {product.stock <= threshold && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
                         {product.stock}
                       </span>
                     </td>

@@ -1,28 +1,75 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import type { Expense } from '../data/expenses'
 import { expenseCategories } from '../data/expenses'
 
 interface ExpenseFormModalProps {
   open: boolean
-  onSave: (expense: { name: string; category: string; amount: number; date: string }) => void
+  expense?: Expense | null
+  onSave: (expenseData: {
+    description: string
+    category: string
+    amount: number
+    date: string
+    notes?: string
+    createdAt: string
+  }) => void
   onClose: () => void
 }
 
-export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormModalProps) {
-  const [name, setName] = useState('')
+export default function ExpenseFormModal({ open, expense, onSave, onClose }: ExpenseFormModalProps) {
+  const [description, setDescription] = useState('')
   const [category, setCategory] = useState(expenseCategories[0])
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [notes, setNotes] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (open) {
+      if (expense) {
+        setDescription(expense.description)
+        setCategory(expense.category)
+        setAmount(expense.amount.toString())
+        setDate(expense.date)
+        setNotes(expense.notes || '')
+      } else {
+        setDescription('')
+        setCategory(expenseCategories[0])
+        setAmount('')
+        setDate(new Date().toISOString().slice(0, 10))
+        setNotes('')
+      }
+      setError('')
+    }
+  }, [open, expense])
 
   if (!open) return null
 
+  const isEditing = !!expense
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !amount || !date) return
+
+    if (!description.trim()) {
+      setError('Description is required.')
+      return
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      setError('Amount must be greater than zero.')
+      return
+    }
+    if (!date) {
+      setError('Date is required.')
+      return
+    }
+
     onSave({
-      name: name.trim(),
+      description: description.trim(),
       category,
       amount: parseFloat(amount),
       date,
+      notes: notes.trim() || undefined,
+      createdAt: expense?.createdAt || new Date().toISOString(),
     })
   }
 
@@ -33,7 +80,9 @@ export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormM
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-gray-900">Add Expense</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Edit Expense' : 'Add Expense'}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -46,11 +95,11 @@ export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormM
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={description}
+              onChange={(e) => { setDescription(e.target.value); setError('') }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
               required
             />
@@ -72,9 +121,9 @@ export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormM
             <input
               type="number"
               step="0.01"
-              min="0"
+              min="0.01"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => { setAmount(e.target.value); setError('') }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
               required
             />
@@ -84,11 +133,29 @@ export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormM
             <input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => { setDate(e.target.value); setError('') }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
               required
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Notes <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow resize-none"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -101,7 +168,7 @@ export default function ExpenseFormModal({ open, onSave, onClose }: ExpenseFormM
               type="submit"
               className="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-colors shadow-sm"
             >
-              Add Expense
+              {isEditing ? 'Update Expense' : 'Add Expense'}
             </button>
           </div>
         </form>

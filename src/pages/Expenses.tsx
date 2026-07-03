@@ -1,17 +1,42 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
 import ExpenseFormModal from '../components/ExpenseFormModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
+import type { Expense } from '../data/expenses'
+import { expenseCategories } from '../data/expenses'
 
 export default function Expenses() {
-  const { expenses, addExpense, removeExpense, loading } = useBusiness()
+  const { expenses, addExpense, updateExpense, removeExpense, loading } = useBusiness()
   const [modalOpen, setModalOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<typeof expenses[number] | null>(null)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null)
 
-  const handleSave = async (data: { name: string; category: string; amount: number; date: string }) => {
-    await addExpense(data)
+  const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
+
+  const handleSave = async (data: {
+    description: string
+    category: string
+    amount: number
+    date: string
+    notes?: string
+    createdAt: string
+  }) => {
+    if (editingExpense) {
+      await updateExpense(editingExpense.id, data)
+    } else {
+      await addExpense(data as Omit<Expense, 'id'>)
+    }
     setModalOpen(false)
+    setEditingExpense(null)
+  }
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense)
+    setModalOpen(true)
   }
 
   const handleDelete = async () => {
@@ -20,12 +45,39 @@ export default function Expenses() {
     setDeleteTarget(null)
   }
 
+  const filtered = useMemo(() => {
+    let result = [...expenses]
+
+    if (search) {
+      const q = search.toLowerCase()
+      result = result.filter((e) => e.description.toLowerCase().includes(q))
+    }
+
+    if (categoryFilter) {
+      result = result.filter((e) => e.category === categoryFilter)
+    }
+
+    if (dateFilter) {
+      result = result.filter((e) => e.date === dateFilter)
+    }
+
+    result.sort((a, b) =>
+      sortOrder === 'newest'
+        ? b.date.localeCompare(a.date)
+        : a.date.localeCompare(b.date)
+    )
+
+    return result
+  }, [expenses, search, categoryFilter, dateFilter, sortOrder])
+
+  const totalFiltered = filtered.reduce((s, e) => s + e.amount, 0)
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Expenses</h2>
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => { setEditingExpense(null); setModalOpen(true) }}
           className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-all duration-150 shadow-sm hover:shadow-md"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,11 +87,85 @@ export default function Expenses() {
         </button>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search expenses..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+        >
+          <option value="">All Categories</option>
+          {expenseCategories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+
+        <input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+        />
+        {dateFilter && (
+          <button
+            onClick={() => setDateFilter('')}
+            className="px-3 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            Clear Date
+          </button>
+        )}
+
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+          <button
+            onClick={() => setSortOrder('newest')}
+            className={`px-3 py-2.5 text-sm font-medium transition-colors ${
+              sortOrder === 'newest'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Newest
+          </button>
+          <button
+            onClick={() => setSortOrder('oldest')}
+            className={`px-3 py-2.5 text-sm font-medium transition-colors ${
+              sortOrder === 'oldest'
+                ? 'bg-indigo-50 text-indigo-700'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            Oldest
+          </button>
+        </div>
+      </div>
+
       {loading ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <TableSkeleton rows={5} cols={5} />
         </div>
-      ) : expenses.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <EmptyState
             icon={
@@ -47,18 +173,24 @@ export default function Expenses() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             }
-            title="No expenses yet"
-            description="Add your first expense to start tracking spending."
+            title={search || categoryFilter || dateFilter ? 'No expenses found' : 'No expenses yet'}
+            description={
+              search || categoryFilter || dateFilter
+                ? 'Try adjusting your search or filters.'
+                : 'Add your first expense to start tracking spending.'
+            }
             action={
-              <button
-                onClick={() => setModalOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Expense
-              </button>
+              !search && !categoryFilter && !dateFilter ? (
+                <button
+                  onClick={() => { setEditingExpense(null); setModalOpen(true) }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors shadow-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Expense
+                </button>
+              ) : undefined
             }
           />
         </div>
@@ -68,7 +200,7 @@ export default function Expenses() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
-                  <th className="px-5 py-4">Name</th>
+                  <th className="px-5 py-4">Description</th>
                   <th className="px-5 py-4">Category</th>
                   <th className="px-5 py-4 text-right">Amount</th>
                   <th className="px-5 py-4">Date</th>
@@ -76,9 +208,14 @@ export default function Expenses() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {expenses.map((expense) => (
+                {filtered.map((expense) => (
                   <tr key={expense.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 font-medium text-gray-900">{expense.name}</td>
+                    <td className="px-5 py-4 font-medium text-gray-900">
+                      <div>{expense.description}</div>
+                      {expense.notes && (
+                        <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">{expense.notes}</div>
+                      )}
+                    </td>
                     <td className="px-5 py-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                         {expense.category}
@@ -89,12 +226,20 @@ export default function Expenses() {
                     </td>
                     <td className="px-5 py-4 text-gray-600">{expense.date}</td>
                     <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => setDeleteTarget(expense)}
-                        className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        Delete
-                      </button>
+                      <div className="inline-flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                        <button
+                          onClick={() => handleEdit(expense)}
+                          className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-lg transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(expense)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -102,9 +247,14 @@ export default function Expenses() {
             </table>
           </div>
           <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
-            <span>{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</span>
+            <span>
+              {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
+              {(search || categoryFilter || dateFilter) && expenses.length !== filtered.length && (
+                <span className="text-gray-400"> (filtered from {expenses.length})</span>
+              )}
+            </span>
             <span className="font-medium text-gray-600">
-              Total: ${expenses.reduce((s, e) => s + e.amount, 0).toFixed(2)}
+              Total: ${totalFiltered.toFixed(2)}
             </span>
           </div>
         </div>
@@ -112,8 +262,9 @@ export default function Expenses() {
 
       <ExpenseFormModal
         open={modalOpen}
+        expense={editingExpense}
         onSave={handleSave}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setEditingExpense(null) }}
       />
 
       {deleteTarget && (
@@ -126,7 +277,7 @@ export default function Expenses() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Delete Expense</h3>
             <p className="text-sm text-gray-500 text-center mb-6">
-              Are you sure you want to delete <strong className="text-gray-700">{deleteTarget.name}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong className="text-gray-700">{deleteTarget.description}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-3">
               <button

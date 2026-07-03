@@ -46,12 +46,12 @@ export const monthlyRevenueExpenses: MonthlyComparisonData[] = [
 ]
 
 export const expenseCategoryColors: Record<string, string> = {
-  Rent: '#6366f1',
+  Inventory: '#6366f1',
   Utilities: '#f59e0b',
+  Transportation: '#f97316',
+  Maintenance: '#06b6d4',
+  Salary: '#ec4899',
+  Rent: '#8b5cf6',
   Supplies: '#10b981',
-  Marketing: '#ec4899',
-  Software: '#8b5cf6',
-  Labor: '#f97316',
-  Logistics: '#06b6d4',
-  Other: '#6b7280',
+  Miscellaneous: '#6b7280',
 }
