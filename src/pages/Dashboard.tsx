@@ -45,13 +45,13 @@ export default function Dashboard() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <div className="lg:col-span-2 xl:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 rounded-lg" />
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 rounded-lg" />
           </div>
           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 rounded-lg" />
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function Dashboard() {
           </div>
           <div className="p-5">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-card">
                 <thead>
                   <tr className="text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">Description</th>
@@ -152,14 +152,14 @@ export default function Dashboard() {
                   ) : (
                     recentExpenses.map((expense) => (
                       <tr key={expense.id} className="transition-colors hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-gray-900">{expense.description}</td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pr-4 text-gray-900" data-label="Description">{expense.description}</td>
+                        <td className="py-3 pr-4" data-label="Category">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                             {expense.category}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-gray-600">{expense.date}</td>
-                        <td className="py-3 text-right text-gray-900 font-medium">{formatCurrency(expense.amount, currency)}</td>
+                        <td className="py-3 pr-4 text-gray-600" data-label="Date">{expense.date}</td>
+                        <td className="py-3 text-right text-gray-900 font-medium" data-label="Amount">{formatCurrency(expense.amount, currency)}</td>
                       </tr>
                     ))
                   )}
@@ -178,11 +178,11 @@ export default function Dashboard() {
           </div>
           <div className="p-5">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-card">
                 <thead>
                   <tr className="text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">Product</th>
-                    <th className="pb-3 pr-4">Customer</th>
+                    <th className="pb-3 pr-4">Qty</th>
                     <th className="pb-3 pr-4">Date</th>
                     <th className="pb-3 text-right">Amount</th>
                   </tr>
@@ -195,14 +195,14 @@ export default function Dashboard() {
                   ) : (
                     recentSales.map((sale) => (
                       <tr key={sale.id} className="transition-colors hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-gray-900">
+                        <td className="py-3 pr-4 text-gray-900" data-label="Product">
                           {sale.items.map((i) => i.productName).join(', ')}
                         </td>
-                        <td className="py-3 pr-4 text-gray-600">
-                          {sale.items.reduce((sum, i) => sum + i.quantity, 0)} unit{sale.items.reduce((sum, i) => sum + i.quantity, 0) !== 1 ? 's' : ''}
+                        <td className="py-3 pr-4 text-gray-600" data-label="Qty">
+                          {sale.items.reduce((sum, i) => sum + i.quantity, 0)}
                         </td>
-                        <td className="py-3 pr-4 text-gray-600">{sale.date}</td>
-                        <td className="py-3 text-right text-gray-900 font-medium">{formatCurrency(sale.total, currency)}</td>
+                        <td className="py-3 pr-4 text-gray-600" data-label="Date">{sale.date}</td>
+                        <td className="py-3 text-right text-gray-900 font-medium" data-label="Amount">{formatCurrency(sale.total, currency)}</td>
                       </tr>
                     ))
                   )}
@@ -219,7 +219,7 @@ export default function Dashboard() {
           </div>
           <div className="p-5">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-card">
                 <thead>
                   <tr className="text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">Product</th>
@@ -235,14 +235,14 @@ export default function Dashboard() {
                   ) : (
                     lowStockProducts.map((product) => (
                       <tr key={product.id} className="transition-colors hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-gray-900">{product.name}</td>
-                        <td className="py-3 pr-4">
+                        <td className="py-3 pr-4 text-gray-900" data-label="Product">{product.name}</td>
+                        <td className="py-3 pr-4" data-label="Stock">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                             {product.stock}
                           </span>
                         </td>
-                        <td className="py-3 text-right text-gray-600">{threshold}</td>
+                        <td className="py-3 text-right text-gray-600" data-label="Min Stock">{threshold}</td>
                       </tr>
                     ))
                   )}

@@ -27,7 +27,7 @@ export default function ExpenseCategoriesChart() {
         <div className="px-5 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
         </div>
-        <div className="p-5 flex items-center justify-center h-72 text-sm text-gray-400">
+        <div className="p-5 flex items-center justify-center h-64 sm:h-72 text-sm text-gray-400">
           No expense data available.
         </div>
       </section>
@@ -40,7 +40,7 @@ export default function ExpenseCategoriesChart() {
         <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
       </div>
       <div className="p-5">
-        <div className="h-72">
+        <div className="h-64 sm:h-72">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

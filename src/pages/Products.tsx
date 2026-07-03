@@ -117,7 +117,7 @@ export default function Products() {
         </div>
       </div>
 
-      <div className="relative max-w-sm">
+      <div className="relative w-full sm:max-w-sm">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -196,7 +196,7 @@ export default function Products() {
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-card">
               <thead>
                 <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
                   <th className="px-5 py-4">Product Name</th>
@@ -209,16 +209,16 @@ export default function Products() {
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((product) => (
                   <tr key={product.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 font-medium text-gray-900">{product.name}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 font-medium text-gray-900" data-label="Product">{product.name}</td>
+                    <td className="px-5 py-4" data-label="Category">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-900 font-medium">
+                    <td className="px-5 py-4 text-gray-900 font-medium" data-label="Price">
                       ${product.price.toFixed(2)}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4" data-label="Stock">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         product.stock <= threshold
                           ? 'bg-red-50 text-red-700'
@@ -230,8 +230,8 @@ export default function Products() {
                         {product.stock}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <div className="inline-flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <td className="px-5 py-4 text-right" data-label="">
+                      <div className="inline-flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         <button
                           onClick={() => handleEdit(product)}
                           className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-lg transition-colors"

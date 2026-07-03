@@ -255,7 +255,7 @@ export default function Reports() {
           {Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <div className="h-72 animate-pulse bg-gray-100 rounded-lg" />
+            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 rounded-lg" />
         </div>
       </div>
     )
@@ -287,7 +287,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 w-full">
         {(['daily', 'weekly', 'monthly', 'custom'] as const).map((p) => (
           <button
             key={p}
@@ -302,19 +302,19 @@ export default function Reports() {
           </button>
         ))}
         {period === 'custom' && (
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-2">
             <input
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="flex-1 sm:flex-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
-            <span className="text-gray-400">to</span>
+            <span className="text-gray-400 shrink-0">to</span>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="flex-1 sm:flex-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
         )}
@@ -384,9 +384,9 @@ export default function Reports() {
           </div>
           <div className="p-5">
             {chartData.length === 0 ? (
-              <div className="h-72 flex items-center justify-center text-sm text-gray-400">No data for this period.</div>
+              <div className="h-64 sm:h-72 flex items-center justify-center text-sm text-gray-400">No data for this period.</div>
             ) : (
-              <div className="h-72">
+              <div className="h-64 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -412,11 +412,11 @@ export default function Reports() {
             <h3 className="text-lg font-semibold text-gray-900">Best Selling Products</h3>
           </div>
           {bestSellers.length === 0 ? (
-            <div className="p-5 h-72 flex items-center justify-center text-sm text-gray-400">No sales data for this period.</div>
+            <div className="p-5 h-64 sm:h-72 flex items-center justify-center text-sm text-gray-400">No sales data for this period.</div>
           ) : (
             <div className="p-5">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm table-card">
                   <thead>
                     <tr className="text-left text-gray-500 font-medium">
                       <th className="pb-3 pr-4">Product</th>
@@ -427,9 +427,9 @@ export default function Reports() {
                   <tbody className="divide-y divide-gray-100">
                     {bestSellers.map((item) => (
                       <tr key={item.productId} className="transition-colors hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-gray-900 font-medium">{item.productName}</td>
-                        <td className="py-3 pr-4 text-right text-gray-600">{item.quantity}</td>
-                        <td className="py-3 text-right text-gray-900 font-medium">{formatCurrency(item.revenue, currency)}</td>
+                        <td className="py-3 pr-4 text-gray-900 font-medium" data-label="Product">{item.productName}</td>
+                        <td className="py-3 pr-4 text-right text-gray-600" data-label="Qty">{item.quantity}</td>
+                        <td className="py-3 text-right text-gray-900 font-medium" data-label="Revenue">{formatCurrency(item.revenue, currency)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -450,7 +450,7 @@ export default function Reports() {
         ) : (
           <div className="p-5">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-card">
                 <thead>
                   <tr className="text-left text-gray-500 font-medium">
                     <th className="pb-3 pr-4">Product</th>
@@ -460,8 +460,8 @@ export default function Reports() {
                 <tbody className="divide-y divide-gray-100">
                   {lowStockProducts.map((p) => (
                     <tr key={p.id} className="transition-colors hover:bg-gray-50">
-                      <td className="py-3 pr-4 text-gray-900">{p.name}</td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 pr-4 text-gray-900" data-label="Product">{p.name}</td>
+                      <td className="py-3 text-right" data-label="Stock">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                           {p.stock}

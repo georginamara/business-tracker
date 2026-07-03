@@ -11,7 +11,7 @@ export default function RevenueExpensesChart() {
         <h3 className="text-lg font-semibold text-gray-900">Revenue vs Expenses</h3>
       </div>
       <div className="p-5">
-        <div className="h-72">
+        <div className="h-64 sm:h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyRevenueExpenses} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />

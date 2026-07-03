@@ -68,7 +68,7 @@ export default function Sales() {
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-card">
               <thead>
                 <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
                   <th className="px-5 py-4">Date</th>
@@ -80,8 +80,8 @@ export default function Sales() {
               <tbody className="divide-y divide-gray-100">
                 {sales.map((sale) => (
                   <tr key={sale.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 text-gray-600 align-top">{sale.date}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-gray-600 align-top" data-label="Date">{sale.date}</td>
+                    <td className="px-5 py-4" data-label="Items">
                       <div className="space-y-1">
                         {sale.items.map((item, idx) => (
                           <div key={idx} className="flex items-center gap-2">
@@ -92,13 +92,13 @@ export default function Sales() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-right text-gray-900 font-medium align-top">
+                    <td className="px-5 py-4 text-right text-gray-900 font-medium align-top" data-label="Total">
                       ${sale.total.toFixed(2)}
                     </td>
-                    <td className="px-5 py-4 text-right align-top">
+                    <td className="px-5 py-4 text-right align-top" data-label="">
                       <button
                         onClick={() => setDeleteTarget(sale)}
-                        className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       >
                         Delete
                       </button>
