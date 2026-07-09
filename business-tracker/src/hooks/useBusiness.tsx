@@ -4,6 +4,7 @@ import { db } from '../lib/firebase'
 import type { Product } from '../data/products'
 import type { Sale } from '../data/sales'
 import type { Expense } from '../data/expenses'
+import type { InventoryMovement } from '../data/inventory'
 import { fetchAll, createDocument, updateDocument, deleteDocument, subscribeToCollection } from '../lib/firestore'
 import { useAuth } from './useAuth'
 
@@ -13,6 +14,14 @@ export interface DashboardStats {
   expenses: number
   netProfit: number
   products: number
+}
+
+interface RestockData {
+  productId: string
+  productName: string
+  quantityAdded: number
+  supplier?: string
+  notes?: string
 }
 
 interface BusinessContextValue {
@@ -26,6 +35,7 @@ interface BusinessContextValue {
   addExpense: (data: Omit<Expense, 'id'>) => Promise<void>
   updateExpense: (id: string, data: Omit<Expense, 'id'>) => Promise<void>
   removeExpense: (id: string) => Promise<void>
+  restockProduct: (data: RestockData) => Promise<void>
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null)
@@ -155,10 +165,47 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     await deleteDocument('expenses', id)
   }, [])
 
+  const restockProduct = useCallback(async (data: RestockData) => {
+    if (!uid) throw new Error('Not authenticated')
+    const productRef = doc(db, 'products', data.productId)
+    const movementRef = doc(collection(db, 'inventory_movements'))
+
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(productRef)
+      if (!snap.exists()) throw new Error('Product not found.')
+      if (snap.data().ownerId !== uid) throw new Error('Product does not belong to you.')
+
+      const previousStock = snap.data().stock as number
+      const newStock = previousStock + data.quantityAdded
+
+      transaction.update(productRef, { stock: newStock })
+      transaction.set(movementRef, {
+        ownerId: uid,
+        productId: data.productId,
+        productName: data.productName,
+        type: 'restock',
+        quantityAdded: data.quantityAdded,
+        previousStock,
+        newStock,
+        supplier: data.supplier ?? null,
+        notes: data.notes ?? null,
+        createdAt: new Date().toISOString(),
+      })
+    })
+
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === data.productId
+          ? { ...p, stock: p.stock + data.quantityAdded }
+          : p
+      )
+    )
+  }, [uid])
+
   return (
     <BusinessContext.Provider value={{
       products, sales, expenses, dashboardStats, loading,
-      addSale, removeSale, addExpense, updateExpense, removeExpense,
+      addSale, removeSale, addExpense, updateExpense, removeExpense, restockProduct,
     }}>
       {children}
     </BusinessContext.Provider>

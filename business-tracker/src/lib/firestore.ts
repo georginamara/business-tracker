@@ -17,6 +17,7 @@ const collections = {
   products: collection(db, 'products'),
   sales: collection(db, 'sales'),
   expenses: collection(db, 'expenses'),
+  inventory_movements: collection(db, 'inventory_movements'),
 } as const satisfies Record<string, CollectionReference>
 
 type CollectionName = keyof typeof collections

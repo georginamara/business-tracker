@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import { where } from 'firebase/firestore'
 import { useAuth } from '../hooks/useAuth'
+import { useBusiness } from '../hooks/useBusiness'
 import { useStore } from '../hooks/useStore'
 import type { Product } from '../data/products'
 import { fetchAll, createDocument, updateDocument, deleteDocument } from '../lib/firestore'
 import { seedDatabase } from '../lib/seed'
 import ProductFormModal from '../components/ProductFormModal'
+import RestockModal from '../components/RestockModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
 export default function Products() {
   const { user } = useAuth()
+  const { restockProduct } = useBusiness()
   const { store } = useStore()
   const uid = user?.uid
   const threshold = store?.lowStockThreshold ?? 5
@@ -22,6 +25,7 @@ export default function Products() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [restockTarget, setRestockTarget] = useState<Product | null>(null)
 
   useEffect(() => {
     if (!uid) return
@@ -233,6 +237,12 @@ export default function Products() {
                     <td className="px-5 py-4 text-right" data-label="">
                       <div className="inline-flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         <button
+                          onClick={() => setRestockTarget(product)}
+                          className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg transition-colors"
+                        >
+                          Restock
+                        </button>
+                        <button
                           onClick={() => handleEdit(product)}
                           className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-lg transition-colors"
                         >
@@ -267,6 +277,15 @@ export default function Products() {
           setEditingProduct(null)
         }}
       />
+
+      {restockTarget && (
+        <RestockModal
+          open={!!restockTarget}
+          product={restockTarget}
+          onRestock={restockProduct}
+          onClose={() => setRestockTarget(null)}
+        />
+      )}
 
       {deleteTarget && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
