@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+@utility table-card {
+  @media (max-width: 639px) {
+    thead {
+      display: none;
+    }
+    tbody tr {
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      gap: 0.5rem;
+    }
+    tbody tr td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 !important;
+      border: none !important;
+    }
+    tbody tr td::before {
+      content: attr(data-label);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+  }
+}
+
+@utility chart-height {
+  height: 18rem;
+  @media (min-width: 768px) {
+    height: 18rem;
+  }
+}
+
+/* Prevent horizontal scroll on body */
+html,
+body {
+  overflow-x: hidden;
+}
