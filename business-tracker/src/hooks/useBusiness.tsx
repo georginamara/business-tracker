@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
-import { collection, doc, runTransaction, where } from 'firebase/firestore'
+import { collection, doc, runTransaction, where, increment } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import type { Product } from '../data/products'
 import type { Sale } from '../data/sales'
@@ -81,9 +81,18 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     const saleRef = doc(collection(db, 'sales'))
 
     await runTransaction(db, async (transaction) => {
-      for (const item of data.items) {
-        const productRef = doc(db, 'products', item.productId)
-        const productSnap = await transaction.get(productRef)
+      const productRefs = data.items.map((item) => ({
+        ref: doc(db, 'products', item.productId),
+        item,
+      }))
+
+      const snapshots = productRefs.map(({ ref, item }) => {
+        const snap = transaction.get(ref)
+        return { snap, item }
+      })
+
+      for (const { snap, item } of snapshots) {
+        const productSnap = await snap
         if (!productSnap.exists()) {
           throw new Error(`Product "${item.productName}" not found.`)
         }
@@ -97,12 +106,19 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
             `Insufficient stock for "${item.productName}". Available: ${currentStock}, requested: ${item.quantity}.`
           )
         }
-        transaction.update(productRef, { stock: currentStock - item.quantity })
       }
+
+      for (const { ref, item } of productRefs) {
+        transaction.update(ref, { stock: increment(-item.quantity) })
+      }
+
       transaction.set(saleRef, {
         date: data.date,
         items: data.items,
         total: data.total,
+        discount: data.discount ?? null,
+        paid: data.paid ?? null,
+        change: data.change ?? null,
         ownerId: uid,
       })
     })
