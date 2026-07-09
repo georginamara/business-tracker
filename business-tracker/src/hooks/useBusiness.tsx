@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react'
-import { collection, doc, runTransaction, where, increment } from 'firebase/firestore'
+import { collection, doc, runTransaction, where, orderBy, increment } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import type { Product } from '../data/products'
 import type { Sale } from '../data/sales'
@@ -37,6 +37,7 @@ interface BusinessContextValue {
   products: Product[]
   sales: Sale[]
   expenses: Expense[]
+  inventoryMovements: InventoryMovement[]
   dashboardStats: DashboardStats
   loading: boolean
   addSale: (data: Omit<Sale, 'id'>) => Promise<void>
@@ -57,6 +58,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([])
   const [sales, setSales] = useState<Sale[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [inventoryMovements, setInventoryMovements] = useState<InventoryMovement[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -84,6 +86,21 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
       },
       () => { setLoading(false) },
       where('ownerId', '==', uid)
+    )
+    return unsub
+  }, [uid])
+
+  useEffect(() => {
+    if (!uid) return
+
+    const unsub = subscribeToCollection<InventoryMovement>(
+      'inventory_movements',
+      (data) => {
+        setInventoryMovements(data)
+      },
+      undefined,
+      where('ownerId', '==', uid),
+      orderBy('createdAt', 'desc')
     )
     return unsub
   }, [uid])
@@ -259,7 +276,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
 
   return (
     <BusinessContext.Provider value={{
-      products, sales, expenses, dashboardStats, loading,
+      products, sales, expenses, inventoryMovements, dashboardStats, loading,
       addSale, removeSale, addExpense, updateExpense, removeExpense, restockProduct, adjustStock,
     }}>
       {children}

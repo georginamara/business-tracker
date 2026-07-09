@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import POS from './pages/POS'
 import Sales from './pages/Sales'
+import InventoryHistory from './pages/InventoryHistory'
 import Expenses from './pages/Expenses'
 import Reports from './pages/Reports'
 import StoreSettings from './pages/StoreSettings'
@@ -56,6 +57,7 @@ function AppRoutes() {
         <Route path="pos" element={<POS />} />
         <Route path="products" element={<Products />} />
         <Route path="sales" element={<Sales />} />
+        <Route path="inventory" element={<InventoryHistory />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<StoreSettings />} />
