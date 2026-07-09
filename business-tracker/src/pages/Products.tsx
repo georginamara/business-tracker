@@ -8,12 +8,13 @@ import { fetchAll, createDocument, updateDocument, deleteDocument } from '../lib
 import { seedDatabase } from '../lib/seed'
 import ProductFormModal from '../components/ProductFormModal'
 import RestockModal from '../components/RestockModal'
+import AdjustmentModal from '../components/AdjustmentModal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 
 export default function Products() {
   const { user } = useAuth()
-  const { restockProduct } = useBusiness()
+  const { restockProduct, adjustStock } = useBusiness()
   const { store } = useStore()
   const uid = user?.uid
   const threshold = store?.lowStockThreshold ?? 5
@@ -26,6 +27,7 @@ export default function Products() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [restockTarget, setRestockTarget] = useState<Product | null>(null)
+  const [adjustTarget, setAdjustTarget] = useState<Product | null>(null)
 
   useEffect(() => {
     if (!uid) return
@@ -237,6 +239,12 @@ export default function Products() {
                     <td className="px-5 py-4 text-right" data-label="">
                       <div className="inline-flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         <button
+                          onClick={() => setAdjustTarget(product)}
+                          className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 rounded-lg transition-colors"
+                        >
+                          Adjust
+                        </button>
+                        <button
                           onClick={() => setRestockTarget(product)}
                           className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg transition-colors"
                         >
@@ -277,6 +285,15 @@ export default function Products() {
           setEditingProduct(null)
         }}
       />
+
+      {adjustTarget && (
+        <AdjustmentModal
+          open={!!adjustTarget}
+          product={adjustTarget}
+          onAdjust={adjustStock}
+          onClose={() => setAdjustTarget(null)}
+        />
+      )}
 
       {restockTarget && (
         <RestockModal

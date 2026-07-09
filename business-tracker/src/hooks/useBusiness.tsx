@@ -24,6 +24,15 @@ interface RestockData {
   notes?: string
 }
 
+interface AdjustmentData {
+  productId: string
+  productName: string
+  adjustmentType: 'increase' | 'decrease'
+  quantity: number
+  reason: string
+  notes?: string
+}
+
 interface BusinessContextValue {
   products: Product[]
   sales: Sale[]
@@ -36,6 +45,7 @@ interface BusinessContextValue {
   updateExpense: (id: string, data: Omit<Expense, 'id'>) => Promise<void>
   removeExpense: (id: string) => Promise<void>
   restockProduct: (data: RestockData) => Promise<void>
+  adjustStock: (data: AdjustmentData) => Promise<void>
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null)
@@ -202,10 +212,55 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     )
   }, [uid])
 
+  const adjustStock = useCallback(async (data: AdjustmentData) => {
+    if (!uid) throw new Error('Not authenticated')
+    const productRef = doc(db, 'products', data.productId)
+    const movementRef = doc(collection(db, 'inventory_movements'))
+
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(productRef)
+      if (!snap.exists()) throw new Error('Product not found.')
+      if (snap.data().ownerId !== uid) throw new Error('Product does not belong to you.')
+
+      const previousStock = snap.data().stock as number
+      const delta = data.adjustmentType === 'increase' ? data.quantity : -data.quantity
+      const newStock = previousStock + delta
+
+      if (newStock < 0) {
+        throw new Error(
+          `Insufficient stock. Available: ${previousStock}, trying to decrease by ${data.quantity}.`
+        )
+      }
+
+      transaction.update(productRef, { stock: newStock })
+      transaction.set(movementRef, {
+        ownerId: uid,
+        productId: data.productId,
+        productName: data.productName,
+        type: 'adjustment',
+        adjustmentType: data.adjustmentType,
+        quantity: data.quantity,
+        reason: data.reason,
+        previousStock,
+        newStock,
+        notes: data.notes ?? null,
+        createdAt: new Date().toISOString(),
+      })
+    })
+
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === data.productId
+          ? { ...p, stock: data.adjustmentType === 'increase' ? p.stock + data.quantity : p.stock - data.quantity }
+          : p
+      )
+    )
+  }, [uid])
+
   return (
     <BusinessContext.Provider value={{
       products, sales, expenses, dashboardStats, loading,
-      addSale, removeSale, addExpense, updateExpense, removeExpense, restockProduct,
+      addSale, removeSale, addExpense, updateExpense, removeExpense, restockProduct, adjustStock,
     }}>
       {children}
     </BusinessContext.Provider>

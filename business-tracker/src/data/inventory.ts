@@ -3,8 +3,11 @@ export interface InventoryMovement {
   ownerId: string
   productId: string
   productName: string
-  type: 'restock'
-  quantityAdded: number
+  type: 'restock' | 'adjustment'
+  quantityAdded?: number
+  adjustmentType?: 'increase' | 'decrease'
+  quantity?: number
+  reason?: string
   previousStock: number
   newStock: number
   supplier?: string
