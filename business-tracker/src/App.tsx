@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { BusinessProvider } from './hooks/useBusiness'
 import { StoreProvider } from './hooks/useStore'
+import { SubscriptionProvider } from './hooks/useSubscription'
+import { ThemeProvider } from './hooks/useTheme'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
@@ -9,6 +11,7 @@ import POS from './pages/POS'
 import Sales from './pages/Sales'
 import InventoryHistory from './pages/InventoryHistory'
 import Expenses from './pages/Expenses'
+import Credits from './pages/Credits'
 import Reports from './pages/Reports'
 import StoreSettings from './pages/StoreSettings'
 import Login from './pages/Login'
@@ -20,7 +23,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -35,7 +38,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -59,6 +62,7 @@ function AppRoutes() {
         <Route path="sales" element={<Sales />} />
         <Route path="inventory" element={<InventoryHistory />} />
         <Route path="expenses" element={<Expenses />} />
+        <Route path="credits" element={<Credits />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<StoreSettings />} />
       </Route>
@@ -71,13 +75,17 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <StoreProvider>
-          <BusinessProvider>
-            <AppRoutes />
-          </BusinessProvider>
-        </StoreProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <StoreProvider>
+              <BusinessProvider>
+                <AppRoutes />
+              </BusinessProvider>
+            </StoreProvider>
+          </SubscriptionProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }
