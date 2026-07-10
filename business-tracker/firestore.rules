@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    function isSuperAdmin() {
+      return isAuth()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'superadmin';
+    }
+
+    match /admins/{userId} {
+      allow read:   if isOwner(userId);
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /stores/{userId} {
+      allow read:   if isOwner(userId) || isSuperAdmin();
+      allow create: if isOwner(userId) && request.resource.data.ownerId == userId;
+      allow update: if isOwner(userId) && resource.data.ownerId == userId;
+      allow delete: if false;
+    }
+
+    match /subscriptions/{userId} {
+      allow read:   if isOwner(userId) || isSuperAdmin();
+      allow create: if isOwner(userId) && request.resource.data.ownerId == userId;
+      allow update: if isOwner(userId) && resource.data.ownerId == userId;
+      allow delete: if false;
+    }
+
+    match /products/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if isAuth() && isOwner(resource.data.ownerId);
+      allow delete: if isAuth() && isOwner(resource.data.ownerId);
+    }
+
+    match /sales/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if false;
+      allow delete: if isAuth() && isOwner(resource.data.ownerId);
+    }
+
+    match /expenses/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if isAuth() && isOwner(resource.data.ownerId);
+      allow delete: if isAuth() && isOwner(resource.data.ownerId);
+    }
+
+    match /inventory_movements/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /credits/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if isAuth() && isOwner(resource.data.ownerId);
+      allow delete: if false;
+    }
+
+    match /credit_payments/{docId} {
+      allow read:   if isAuth() && isOwner(resource.data.ownerId);
+      allow create: if isAuth() && isOwner(request.resource.data.ownerId);
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
