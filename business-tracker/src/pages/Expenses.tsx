@@ -5,6 +5,7 @@ import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 import type { Expense } from '../data/expenses'
 import { expenseCategories } from '../data/expenses'
+import type { Timestamp, FieldValue } from 'firebase/firestore'
 
 export default function Expenses() {
   const { expenses, addExpense, updateExpense, removeExpense, loading } = useBusiness()
@@ -23,12 +24,12 @@ export default function Expenses() {
     amount: number
     date: string
     notes?: string
-    createdAt: string
+    createdAt: Timestamp | FieldValue
   }) => {
     if (editingExpense) {
-      await updateExpense(editingExpense.id, data)
+      await updateExpense(editingExpense.id, data as Omit<Expense, 'id'>)
     } else {
-      await addExpense(data as Omit<Expense, 'id'>)
+      await addExpense(data as unknown as Omit<Expense, 'id'>)
     }
     setModalOpen(false)
     setEditingExpense(null)
@@ -75,7 +76,7 @@ export default function Expenses() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Expenses</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Expenses</h2>
         <button
           onClick={() => { setEditingExpense(null); setModalOpen(true) }}
           className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-all duration-150 shadow-sm hover:shadow-md"
@@ -89,7 +90,7 @@ export default function Expenses() {
 
       <div className="flex flex-wrap gap-3">
         <div className="relative w-full sm:flex-1 sm:max-w-sm">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -97,12 +98,12 @@ export default function Expenses() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search expenses..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white dark:bg-slate-700 dark:text-white"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -114,7 +115,7 @@ export default function Expenses() {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="flex-1 min-w-[140px] rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+          className="flex-1 min-w-[140px] rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white dark:bg-slate-700 dark:text-white"
         >
           <option value="">All Categories</option>
           {expenseCategories.map((c) => (
@@ -126,24 +127,24 @@ export default function Expenses() {
           type="date"
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          className="flex-1 min-w-[140px] rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+          className="flex-1 min-w-[140px] rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white dark:bg-slate-700 dark:text-white"
         />
         {dateFilter && (
           <button
             onClick={() => setDateFilter('')}
-            className="px-3 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
           >
             Clear Date
           </button>
         )}
 
-        <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+        <div className="flex rounded-lg border border-gray-300 dark:border-slate-600 overflow-hidden">
           <button
             onClick={() => setSortOrder('newest')}
             className={`px-3 py-2.5 text-sm font-medium transition-colors ${
               sortOrder === 'newest'
                 ? 'bg-indigo-50 text-indigo-700'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-600'
             }`}
           >
             Newest
@@ -153,7 +154,7 @@ export default function Expenses() {
             className={`px-3 py-2.5 text-sm font-medium transition-colors ${
               sortOrder === 'oldest'
                 ? 'bg-indigo-50 text-indigo-700'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
+                : 'bg-white dark:bg-slate-700 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-600'
             }`}
           >
             Oldest
@@ -162,11 +163,11 @@ export default function Expenses() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-5">
           <TableSkeleton rows={5} cols={5} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
           <EmptyState
             icon={
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,11 +196,11 @@ export default function Expenses() {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm table-card">
               <thead>
-                <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
+                <tr className="text-left text-gray-500 dark:text-slate-400 font-medium border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-700/50">
                   <th className="px-5 py-4">Description</th>
                   <th className="px-5 py-4">Category</th>
                   <th className="px-5 py-4 text-right">Amount</th>
@@ -207,24 +208,24 @@ export default function Expenses() {
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {filtered.map((expense) => (
-                  <tr key={expense.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 font-medium text-gray-900" data-label="Description">
+                  <tr key={expense.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50 group">
+                    <td className="px-5 py-4 font-medium text-gray-900 dark:text-white" data-label="Description">
                       <div>{expense.description}</div>
                       {expense.notes && (
-                        <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">{expense.notes}</div>
+                        <div className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 line-clamp-1">{expense.notes}</div>
                       )}
                     </td>
                     <td className="px-5 py-4" data-label="Category">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
                         {expense.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-right text-gray-900 font-medium" data-label="Amount">
+                    <td className="px-5 py-4 text-right text-gray-900 dark:text-white font-medium" data-label="Amount">
                       ${expense.amount.toFixed(2)}
                     </td>
-                    <td className="px-5 py-4 text-gray-600" data-label="Date">{expense.date}</td>
+                    <td className="px-5 py-4 text-gray-600 dark:text-slate-400" data-label="Date">{expense.date}</td>
                     <td className="px-5 py-4 text-right" data-label="">
                       <div className="inline-flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         <button
@@ -246,14 +247,14 @@ export default function Expenses() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
+          <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500 flex items-center justify-between">
             <span>
               {filtered.length} expense{filtered.length !== 1 ? 's' : ''}
               {(search || categoryFilter || dateFilter) && expenses.length !== filtered.length && (
-                <span className="text-gray-400"> (filtered from {expenses.length})</span>
+                <span className="text-gray-400 dark:text-slate-500"> (filtered from {expenses.length})</span>
               )}
             </span>
-            <span className="font-medium text-gray-600">
+            <span className="font-medium text-gray-600 dark:text-slate-300">
               Total: ${totalFiltered.toFixed(2)}
             </span>
           </div>
@@ -269,20 +270,20 @@ export default function Expenses() {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 mb-4 mx-auto">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Delete Expense</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">
-              Are you sure you want to delete <strong className="text-gray-700">{deleteTarget.description}</strong>? This action cannot be undone.
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Delete Expense</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 text-center mb-6">
+              Are you sure you want to delete <strong className="text-gray-700 dark:text-slate-200">{deleteTarget.description}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
               >
                 Cancel
               </button>

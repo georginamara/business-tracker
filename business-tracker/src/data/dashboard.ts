@@ -1,9 +1,3 @@
-import { seedFirestore } from "./utils/seedFirestore";
-
-<button onClick={seedFirestore}>
-  🌱 Seed Database
-</button>
-
 export interface DashboardStats {
   totalSales: number
   revenue: number

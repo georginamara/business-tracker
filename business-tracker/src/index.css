@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
 @theme {
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-scale-in: scale-in 0.2s ease-out;
@@ -62,8 +64,17 @@
   }
 }
 
-/* Prevent horizontal scroll on body */
+html {
+  transition: color 250ms, background-color 250ms;
+}
+
 html,
 body {
   overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke;
+  transition-duration: 250ms;
+  transition-timing-function: ease-out;
 }

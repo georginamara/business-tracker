@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from './useAuth'
+import { useAdmin } from './useAdmin'
 import type { Store } from '../data/store'
 import { DEFAULT_STORE } from '../data/store'
 
@@ -15,6 +16,7 @@ const StoreContext = createContext<StoreContextValue | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { isSuperAdmin } = useAdmin()
   const uid = user?.uid
   const email = user?.email || ''
 
@@ -25,6 +27,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!uid) {
       setStore(null)
       setLoading(true)
+      return
+    }
+
+    if (isSuperAdmin) {
+      setStore(null)
+      setLoading(false)
       return
     }
 
@@ -50,7 +58,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
 
     return unsub
-  }, [uid, email])
+  }, [uid, email, isSuperAdmin])
 
   const updateStore = useCallback(async (data: Partial<Omit<Store, 'ownerId' | 'createdAt' | 'updatedAt'>>) => {
     if (!uid) throw new Error('Not authenticated')

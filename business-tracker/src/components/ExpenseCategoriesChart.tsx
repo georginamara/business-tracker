@@ -23,21 +23,28 @@ export default function ExpenseCategoriesChart() {
 
   if (data.length === 0) {
     return (
-      <section className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
+      <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Expense Categories</h3>
         </div>
-        <div className="p-5 flex items-center justify-center h-64 sm:h-72 text-sm text-gray-400">
-          No expense data available.
+        <div className="flex flex-col items-center justify-center h-64 sm:h-72 px-4">
+          <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">No expense data</p>
+          <p className="text-xs text-gray-400 dark:text-slate-500 text-center">Expense breakdown will appear here once expenses are recorded.</p>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-      <div className="px-5 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Expense Categories</h3>
+    <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Expense Categories</h3>
       </div>
       <div className="p-5">
         <div className="h-64 sm:h-72">
@@ -88,8 +95,8 @@ export default function ExpenseCategoriesChart() {
                 className="w-2.5 h-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: entry.color }}
               />
-              <span className="text-gray-600 truncate">{entry.name}</span>
-              <span className="text-gray-900 font-medium ml-auto">
+              <span className="text-gray-600 dark:text-slate-400 truncate">{entry.name}</span>
+              <span className="text-gray-900 dark:text-white font-medium ml-auto">
                 {((entry.value / total) * 100).toFixed(0)}%
               </span>
             </div>

@@ -14,4 +14,5 @@ export interface Sale {
   discount?: number
   paid?: number
   change?: number
+  paymentMethod?: 'cash' | 'credit'
 }

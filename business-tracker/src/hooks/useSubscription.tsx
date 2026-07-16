@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef, ty
 import { doc, onSnapshot, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from './useAuth'
+import { useAdmin } from './useAdmin'
 import type { Subscription } from '../data/subscription'
 import { createDefaultSubscription } from '../data/subscription'
 
@@ -16,6 +17,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const uid = user?.uid
+  const { isSuperAdmin, loading: adminLoading } = useAdmin()
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,9 +26,17 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     lastLoginUpdated.current = false
 
-    if (!uid) {
+    if (!uid || adminLoading) {
+      if (!adminLoading && !uid) {
+        setSubscription(null)
+        setLoading(true)
+      }
+      return
+    }
+
+    if (isSuperAdmin) {
       setSubscription(null)
-      setLoading(true)
+      setLoading(false)
       return
     }
 
@@ -69,15 +79,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     })
 
     return unsub
-  }, [uid])
+  }, [uid, isSuperAdmin, adminLoading])
 
   const updateSubscription = useCallback(async (
     data: Partial<Omit<Subscription, 'ownerId' | 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'createdByVersion'>>
   ) => {
     if (!uid) throw new Error('Not authenticated')
+    if (isSuperAdmin) throw new Error('Super admin accounts do not have subscriptions')
     const subRef = doc(db, 'subscriptions', uid)
     await setDoc(subRef, { ...data, updatedAt: serverTimestamp() }, { merge: true })
-  }, [uid])
+  }, [uid, isSuperAdmin])
 
   return (
     <SubscriptionContext.Provider value={{ subscription, loading, updateSubscription }}>

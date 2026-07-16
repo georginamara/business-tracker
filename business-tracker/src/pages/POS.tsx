@@ -15,6 +15,10 @@ export default function POS() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [discount, setDiscount] = useState('')
   const [paid, setPaid] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('cash')
+  const [customerName, setCustomerName] = useState('')
+  const [contactNumber, setContactNumber] = useState('')
+  const [creditNotes, setCreditNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -90,6 +94,10 @@ export default function POS() {
     setCart([])
     setDiscount('')
     setPaid('')
+    setPaymentMethod('cash')
+    setCustomerName('')
+    setContactNumber('')
+    setCreditNotes('')
     setError('')
     setSuccess('')
   }
@@ -99,9 +107,17 @@ export default function POS() {
       setError('Cart is empty.')
       return
     }
-    if (paidValue < total) {
+
+    if (paymentMethod === 'cash' && paidValue < total) {
       setError('Customer paid amount must cover the total.')
       return
+    }
+
+    if (paymentMethod === 'credit') {
+      if (!customerName.trim()) {
+        setError('Customer name is required for credit purchases.')
+        return
+      }
     }
 
     setSaving(true)
@@ -117,15 +133,31 @@ export default function POS() {
     }))
 
     try {
-      await addSale({
-        date: new Date().toISOString().slice(0, 10),
-        items,
-        total,
-        discount: discountValue,
-        paid: paidValue,
-        change,
-      })
-      setSuccess(`Sale completed! Change: $${change.toFixed(2)}`)
+      if (paymentMethod === 'credit') {
+        await addSale({
+          date: new Date().toISOString().slice(0, 10),
+          items,
+          total,
+          discount: discountValue || undefined,
+          paymentMethod: 'credit',
+        }, {
+          customerName: customerName.trim(),
+          contactNumber: contactNumber.trim() || undefined,
+          notes: creditNotes.trim() || undefined,
+        })
+        setSuccess(`Credit sale recorded for ${customerName.trim()}!`)
+      } else {
+        await addSale({
+          date: new Date().toISOString().slice(0, 10),
+          items,
+          total,
+          discount: discountValue,
+          paid: paidValue,
+          change,
+          paymentMethod: 'cash',
+        })
+        setSuccess(`Sale completed! Change: $${change.toFixed(2)}`)
+      }
       clearCart()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Checkout failed.')
@@ -137,10 +169,10 @@ export default function POS() {
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 gap-0 animate-fade-in">
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="p-4 sm:p-6 border-b border-gray-200 bg-white space-y-3">
+        <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -148,13 +180,13 @@ export default function POS() {
                 placeholder="Search products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                className="w-full rounded-lg border border-gray-300 dark:border-slate-600 pl-9 pr-3 py-2.5 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow"
               />
             </div>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+              className="rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow bg-white dark:bg-slate-800"
             >
               <option value="">All Categories</option>
               {categories.filter(Boolean).map((c) => (
@@ -162,7 +194,7 @@ export default function POS() {
               ))}
             </select>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-slate-400">
             {filtered.length} product{filtered.length !== 1 ? 's' : ''}
             {category && ` in ${category}`}
           </p>
@@ -170,11 +202,16 @@ export default function POS() {
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <svg className="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-              <p className="text-sm font-medium">No products found</p>
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No products found</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 text-center max-w-xs">
+                {search || category ? 'Try a different search or category.' : 'Add products to start selling.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -191,12 +228,12 @@ export default function POS() {
                     disabled={outOfStock || atMax}
                     className={`relative flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all duration-150 ${
                       outOfStock
-                        ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                        ? 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 cursor-not-allowed'
                         : atMax
-                        ? 'border-amber-200 bg-amber-50 cursor-not-allowed'
+                        ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 cursor-not-allowed'
                         : inCart > 0
-                        ? 'border-indigo-300 bg-indigo-50 shadow-sm hover:shadow-md hover:border-indigo-400 cursor-pointer'
-                        : 'border-gray-200 bg-white shadow-sm hover:shadow-md hover:border-gray-300 hover:bg-gray-50 cursor-pointer'
+                        ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 shadow-sm hover:shadow-md hover:border-indigo-400 dark:hover:border-indigo-500 cursor-pointer'
+                        : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50 cursor-pointer'
                     }`}
                   >
                     {outOfStock && (
@@ -209,19 +246,19 @@ export default function POS() {
                         {inCart}
                       </span>
                     )}
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center mb-2">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-100 dark:from-indigo-900/30 to-indigo-200 dark:to-indigo-800/30 flex items-center justify-center mb-2">
+                      <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
-                    <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight mb-1">
+                    <p className="text-xs font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight mb-1">
                       {product.name}
                     </p>
-                    <p className="text-xs font-bold text-indigo-600">
+                    <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
                       ${product.price.toFixed(2)}
                     </p>
                     <p className={`text-[10px] mt-0.5 ${
-                      product.stock <= 5 ? 'text-red-500 font-medium' : 'text-gray-400'
+                      product.stock <= 5 ? 'text-red-500 font-medium' : 'text-gray-400 dark:text-slate-400'
                     }`}>
                       {outOfStock ? 'Out of Stock' : `${product.stock} left`}
                     </p>
@@ -233,17 +270,17 @@ export default function POS() {
         </div>
       </div>
 
-      <div className="w-80 lg:w-96 xl:w-[28rem] bg-white border-l border-gray-200 flex flex-col flex-shrink-0">
-        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50/50">
+      <div className="w-80 lg:w-96 xl:w-[28rem] bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col flex-shrink-0">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-700/50">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               Cart ({cart.reduce((s, i) => s + i.quantity, 0)} items)
             </h3>
             {cart.length > 0 && (
               <button
                 type="button"
                 onClick={clearCart}
-                className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
               >
                 Clear
               </button>
@@ -253,22 +290,24 @@ export default function POS() {
 
         <div className="flex-1 overflow-y-auto">
           {cart.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">
-              <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-              </svg>
-              <p className="text-sm font-medium">Cart is empty</p>
-              <p className="text-xs mt-1">Click products to add them</p>
+            <div className="flex flex-col items-center justify-center h-full p-6">
+              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-3">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                </svg>
+              </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Cart is empty</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Click products to add them</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-slate-700">
               {cart.map((item) => (
                 <div key={item.product.id} className="p-3 flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {item.product.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-slate-400">
                       ${item.product.price.toFixed(2)} each
                     </p>
                   </div>
@@ -277,7 +316,7 @@ export default function POS() {
                       type="button"
                       onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                       disabled={item.quantity <= 1}
-                      className="w-7 h-7 rounded-md border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="w-7 h-7 rounded-md border border-gray-300 dark:border-slate-600 flex items-center justify-center text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -292,13 +331,13 @@ export default function POS() {
                         const val = parseInt(e.target.value, 10)
                         if (!isNaN(val)) updateQuantity(item.product.id, val)
                       }}
-                      className="w-10 text-center text-sm border border-gray-300 rounded-md py-1 px-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-10 text-center text-sm border border-gray-300 dark:border-slate-600 rounded-md py-1 px-1 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                     />
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                       disabled={item.quantity >= item.product.stock}
-                      className="w-7 h-7 rounded-md border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="w-7 h-7 rounded-md border border-gray-300 dark:border-slate-600 flex items-center justify-center text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -306,14 +345,14 @@ export default function POS() {
                     </button>
                   </div>
                   <div className="text-right min-w-[4rem]">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       ${(item.product.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => removeFromCart(item.product.id)}
-                    className="p-1 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="p-1 rounded-md text-gray-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -325,16 +364,16 @@ export default function POS() {
           )}
         </div>
 
-        <div className="border-t border-gray-200 p-4 space-y-3 bg-gray-50/50">
+        <div className="border-t border-gray-200 dark:border-slate-700 p-4 space-y-3 bg-gray-50/50 dark:bg-slate-700/50">
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-gray-600 dark:text-slate-400">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-gray-600">Discount</span>
+              <span className="text-gray-600 dark:text-slate-400">Discount</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-400">-</span>
+                <span className="text-gray-400 dark:text-slate-400">-</span>
                 <input
                   type="number"
                   min="0"
@@ -343,47 +382,127 @@ export default function POS() {
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
                   placeholder="0.00"
-                  className="w-24 text-right text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-24 text-right text-sm border border-gray-300 dark:border-slate-600 rounded-md px-2 py-1 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400"
                 />
               </div>
             </div>
-            <div className="flex justify-between text-base font-bold text-gray-900 pt-1.5 border-t border-gray-200">
+            <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white pt-1.5 border-t border-gray-200 dark:border-slate-700">
               <span>Total</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Customer Paid</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={paid}
-                onChange={(e) => setPaid(e.target.value)}
-                placeholder="0.00"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
-              />
+          <div>
+            <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">Payment Method</label>
+            <div className="flex gap-2">
+              <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                paymentMethod === 'cash'
+                  ? 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                  : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+              }`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cash"
+                  checked={paymentMethod === 'cash'}
+                  onChange={() => setPaymentMethod('cash')}
+                  className="sr-only"
+                />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Cash
+              </label>
+              <label className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                paymentMethod === 'credit'
+                  ? 'border-purple-400 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400'
+                  : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700/50'
+              }`}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="credit"
+                  checked={paymentMethod === 'credit'}
+                  onChange={() => setPaymentMethod('credit')}
+                  className="sr-only"
+                />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                Credit
+              </label>
             </div>
-            {paidValue > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Change</span>
-                <span className={`font-semibold ${paidValue >= total ? 'text-green-600' : 'text-red-600'}`}>
-                  {paidValue >= total ? `$${change.toFixed(2)}` : `Short $${(total - paidValue).toFixed(2)}`}
-                </span>
-              </div>
-            )}
           </div>
 
+          {paymentMethod === 'cash' ? (
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Customer Paid</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={paid}
+                  onChange={(e) => setPaid(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow"
+                />
+              </div>
+              {paidValue > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-slate-400">Change</span>
+                  <span className={`font-semibold ${paidValue >= total ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {paidValue >= total ? `$${change.toFixed(2)}` : `Short $${(total - paidValue).toFixed(2)}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg border border-purple-100 dark:border-purple-800">
+              <p className="text-xs font-medium text-purple-700 dark:text-purple-400 mb-2">Credit Information</p>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
+                  Customer Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="e.g. Juan Dela Cruz"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Contact Number</label>
+                <input
+                  type="text"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Notes</label>
+                <textarea
+                  value={creditNotes}
+                  onChange={(e) => setCreditNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow resize-none"
+                />
+              </div>
+            </div>
+          )}
+
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-xs text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2.5 text-xs text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 text-xs text-green-700 font-medium">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2.5 text-xs text-green-700 dark:text-green-400 font-medium">
               {success}
             </div>
           )}
@@ -391,7 +510,7 @@ export default function POS() {
           <button
             type="button"
             onClick={handleCheckout}
-            disabled={saving || cart.length === 0 || paidValue < total}
+            disabled={saving || cart.length === 0 || (paymentMethod === 'cash' && paidValue < total) || (paymentMethod === 'credit' && !customerName.trim())}
             className="w-full py-3 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {saving ? (
@@ -402,6 +521,8 @@ export default function POS() {
                 </svg>
                 Processing…
               </span>
+            ) : paymentMethod === 'credit' ? (
+              `Record Credit Sale — $${total.toFixed(2)}`
             ) : (
               `Complete Sale — $${total.toFixed(2)}`
             )}

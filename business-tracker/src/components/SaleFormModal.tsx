@@ -105,15 +105,15 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-gray-900">Add Sale</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Sale</h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1 rounded-md text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -123,19 +123,19 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow dark:bg-slate-700 dark:text-white"
               required
             />
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">Items</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-400">Items</label>
               <button
                 type="button"
                 onClick={addItem}
@@ -154,13 +154,13 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
               const exceedsStock = product && qty > product.stock
 
               return (
-                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200 space-y-2">
+                <div key={index} className="bg-gray-50 dark:bg-slate-800 rounded-lg p-3 border border-gray-200 dark:border-slate-700 space-y-2">
                   <div className="flex items-start gap-2">
                     <div className="flex-1 space-y-2">
                       <select
                         value={item.productId}
                         onChange={(e) => handleProductChange(index, e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+                        className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow dark:bg-slate-700 dark:text-white"
                         required
                       >
                         <option value="">Select a product</option>
@@ -172,15 +172,15 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
                       </select>
                       <div className="flex gap-2 items-start">
                         <div className="flex-1">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Quantity</label>
+                          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Quantity</label>
                           <input
                             type="number"
                             min="1"
                             max={product?.stock ?? 1}
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(index, e.target.value)}
-                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow ${
-                              exceedsStock ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow dark:bg-slate-700 dark:text-white ${
+                              exceedsStock ? 'border-red-400 bg-red-50 dark:border-red-400 dark:bg-red-900/20' : 'border-gray-300 dark:border-slate-600'
                             }`}
                             required
                           />
@@ -191,8 +191,8 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
                           )}
                         </div>
                         <div className="text-right min-w-[80px]">
-                          <label className="block text-xs font-medium text-gray-500 mb-1">Subtotal</label>
-                          <div className="py-2 text-sm font-semibold text-gray-900">
+                          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Subtotal</label>
+                          <div className="py-2 text-sm font-semibold text-gray-900 dark:text-white">
                             ${(product && qty ? product.price * qty : 0).toFixed(2)}
                           </div>
                         </div>
@@ -202,7 +202,7 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="p-1.5 mt-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
+                        className="p-1.5 mt-1 rounded-md text-gray-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex-shrink-0"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -216,14 +216,14 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
-          <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-lg p-4 text-sm border border-indigo-200 flex items-center justify-between">
-            <span className="text-indigo-700 font-medium">Total</span>
-            <span className="font-bold text-indigo-900 text-lg">${total.toFixed(2)}</span>
+          <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 dark:from-indigo-900/40 dark:to-indigo-800/40 rounded-lg p-4 text-sm border border-indigo-200 dark:border-indigo-700 flex items-center justify-between">
+            <span className="text-indigo-700 dark:text-indigo-300 font-medium">Total</span>
+            <span className="font-bold text-indigo-900 dark:text-indigo-200 text-lg">${total.toFixed(2)}</span>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -231,7 +231,7 @@ export default function SaleFormModal({ open, products, onSave, onClose }: SaleF
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

@@ -4,6 +4,7 @@ import {
 } from 'recharts'
 import { useBusiness } from '../hooks/useBusiness'
 import { useStore } from '../hooks/useStore'
+import { useTheme } from '../hooks/useTheme'
 import DashboardCard from '../components/DashboardCard'
 import { CardSkeleton } from '../components/Skeleton'
 
@@ -56,10 +57,21 @@ interface BestSeller {
 }
 
 export default function Reports() {
-  const { products, sales, expenses, loading } = useBusiness()
+  const { products, sales, expenses, credits, loading } = useBusiness()
   const { store } = useStore()
   const threshold = store?.lowStockThreshold ?? 5
   const currency = store?.currency ?? 'USD'
+
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
+
+  const chartColors = useMemo(() => ({
+    grid: isDark ? '#334155' : '#e5e7eb',
+    axis: isDark ? '#94a3b8' : '#6b7280',
+    tooltipBg: isDark ? '#1e293b' : '#fff',
+    tooltipBorder: isDark ? '#475569' : '#e5e7eb',
+    tooltipLabel: isDark ? '#f1f5f9' : '#111827',
+  }), [isDark])
 
   const [period, setPeriod] = useState<ReportPeriod>('monthly')
   const [customStart, setCustomStart] = useState('')
@@ -128,6 +140,21 @@ export default function Reports() {
   const lowStockProducts = useMemo(
     () => products.filter((p) => p.stock <= threshold).sort((a, b) => a.stock - b.stock),
     [products, threshold]
+  )
+
+  const totalOutstandingCredits = useMemo(
+    () => credits.reduce((sum, c) => sum + c.remainingBalance, 0),
+    [credits]
+  )
+
+  const totalCollectedCreditPayments = useMemo(
+    () => credits.reduce((sum, c) => sum + c.amountPaid, 0),
+    [credits]
+  )
+
+  const activeCreditAccounts = useMemo(
+    () => credits.filter((c) => c.status !== 'Paid').length,
+    [credits]
   )
 
   const chartData = useMemo(() => {
@@ -237,6 +264,21 @@ export default function Reports() {
       })
     }
 
+    if (activeCreditAccounts > 0) {
+      doc.text('Credit Summary', 14, lastY() + 12)
+      autoTable(doc, {
+        startY: lastY() + 16,
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total Outstanding Credits', `${sym}${totalOutstandingCredits.toFixed(2)}`],
+          ['Total Collected Credit Payments', `${sym}${totalCollectedCreditPayments.toFixed(2)}`],
+          ['Active Credit Accounts', String(activeCreditAccounts)],
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [168, 85, 247] },
+      })
+    }
+
     doc.text('Daily Breakdown', 14, lastY() + 12)
     autoTable(doc, {
       startY: lastY() + 16,
@@ -252,12 +294,12 @@ export default function Reports() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-32 rounded-lg bg-gray-200 animate-pulse" />
+        <div className="h-8 w-32 rounded-lg bg-gray-200 dark:bg-slate-700 animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {Array.from({ length: 5 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 rounded-lg" />
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-5">
+            <div className="h-64 sm:h-72 animate-pulse bg-gray-100 dark:bg-slate-700 rounded-lg" />
         </div>
       </div>
     )
@@ -266,11 +308,11 @@ export default function Reports() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Reports</h2>
         <div className="flex gap-2">
           <button
             onClick={generateCSV}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg transition-all duration-150 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 active:bg-emerald-200 rounded-lg transition-all duration-150 shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -279,7 +321,7 @@ export default function Reports() {
           </button>
           <button
             onClick={generatePDF}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-all duration-150 shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 active:bg-red-200 rounded-lg transition-all duration-150 shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -297,7 +339,7 @@ export default function Reports() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               period === p
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'
+                : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-400 border border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700'
             }`}
           >
             {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -309,21 +351,21 @@ export default function Reports() {
               type="date"
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
-              className="flex-1 sm:flex-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="flex-1 sm:flex-none rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500"
             />
-            <span className="text-gray-400 shrink-0">to</span>
+            <span className="text-gray-400 dark:text-slate-500 shrink-0">to</span>
             <input
               type="date"
               value={customEnd}
               onChange={(e) => setCustomEnd(e.target.value)}
-              className="flex-1 sm:flex-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="flex-1 sm:flex-none rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500"
             />
           </div>
         )}
       </div>
 
-      <div className="text-sm text-gray-500">
-        <span className="font-medium text-gray-700">{periodLabel}</span> &mdash; {range.start} to {range.end}
+      <div className="text-sm text-gray-500 dark:text-slate-400">
+        <span className="font-medium text-gray-700 dark:text-slate-300">{periodLabel}</span> &mdash; {range.start} to {range.end}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -380,24 +422,32 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Revenue vs Expenses</h3>
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Revenue vs Expenses</h3>
           </div>
           <div className="p-5">
             {chartData.length === 0 ? (
-              <div className="h-64 sm:h-72 flex items-center justify-center text-sm text-gray-400">No data for this period.</div>
+              <div className="h-64 sm:h-72 flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-3">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">No data for this period</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 text-center">Revenue and expense data will appear here once transactions are recorded.</p>
+              </div>
             ) : (
               <div className="h-64 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
-                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: chartColors.axis }} axisLine={{ stroke: chartColors.grid }} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill: chartColors.axis }} axisLine={{ stroke: chartColors.grid }} tickLine={false} tickFormatter={(v) => `$${v}`} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '13px' }}
+                      contentStyle={{ backgroundColor: chartColors.tooltipBg, border: `1px solid ${chartColors.tooltipBorder}`, borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontSize: '13px' }}
                       formatter={(value) => [`$${Number(value).toLocaleString('en-US')}`, undefined]}
-                      labelStyle={{ fontWeight: 600, color: '#111827' }}
+                      labelStyle={{ fontWeight: 600, color: chartColors.tooltipLabel }}
                     />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" iconSize={8} />
                     <Bar dataKey="revenue" name="Revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={32} />
@@ -409,29 +459,37 @@ export default function Reports() {
           </div>
         </section>
 
-        <section className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="px-5 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Best Selling Products</h3>
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Best Selling Products</h3>
           </div>
           {bestSellers.length === 0 ? (
-            <div className="p-5 h-64 sm:h-72 flex items-center justify-center text-sm text-gray-400">No sales data for this period.</div>
+            <div className="p-5 h-64 sm:h-72 flex flex-col items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">No best sellers yet</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 text-center">Top-selling products will appear here once sales are recorded.</p>
+            </div>
           ) : (
             <div className="p-5">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm table-card">
                   <thead>
-                    <tr className="text-left text-gray-500 font-medium">
+                    <tr className="text-left text-gray-500 dark:text-slate-400 font-medium">
                       <th className="pb-3 pr-4">Product</th>
                       <th className="pb-3 pr-4 text-right">Quantity</th>
                       <th className="pb-3 text-right">Revenue</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                     {bestSellers.map((item) => (
-                      <tr key={item.productId} className="transition-colors hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-gray-900 font-medium" data-label="Product">{item.productName}</td>
-                        <td className="py-3 pr-4 text-right text-gray-600" data-label="Qty">{item.quantity}</td>
-                        <td className="py-3 text-right text-gray-900 font-medium" data-label="Revenue">{formatCurrency(item.revenue, currency)}</td>
+                      <tr key={item.productId} className="transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="py-3 pr-4 text-gray-900 dark:text-white font-medium" data-label="Product">{item.productName}</td>
+                        <td className="py-3 pr-4 text-right text-gray-600 dark:text-slate-400" data-label="Qty">{item.quantity}</td>
+                        <td className="py-3 text-right text-gray-900 dark:text-white font-medium" data-label="Revenue">{formatCurrency(item.revenue, currency)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -442,29 +500,39 @@ export default function Reports() {
         </section>
       </div>
 
-      <section className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Low Stock Products</h3>
-          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">{lowStockProducts.length} alerts</span>
+          <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full">{lowStockProducts.length} alerts</span>
         </div>
         {lowStockProducts.length === 0 ? (
-          <div className="p-5 text-sm text-gray-400">All products are well-stocked.</div>
+          <div className="px-5 py-10">
+            <div className="flex flex-col items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 mb-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">All products well-stocked</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 text-center">No products are below the stock threshold.</p>
+            </div>
+          </div>
         ) : (
           <div className="p-5">
             <div className="overflow-x-auto">
               <table className="w-full text-sm table-card">
                 <thead>
-                  <tr className="text-left text-gray-500 font-medium">
-                    <th className="pb-3 pr-4">Product</th>
-                    <th className="pb-3 text-right">Stock</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {lowStockProducts.map((p) => (
-                    <tr key={p.id} className="transition-colors hover:bg-gray-50">
-                      <td className="py-3 pr-4 text-gray-900" data-label="Product">{p.name}</td>
+                    <tr className="text-left text-gray-500 dark:text-slate-400 font-medium">
+                      <th className="pb-3 pr-4">Product</th>
+                      <th className="pb-3 text-right">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                    {lowStockProducts.map((p) => (
+                      <tr key={p.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="py-3 pr-4 text-gray-900 dark:text-white" data-label="Product">{p.name}</td>
                       <td className="py-3 text-right" data-label="Stock">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                           {p.stock}
                         </span>
@@ -477,6 +545,30 @@ export default function Reports() {
           </div>
         )}
       </section>
+
+      {credits.length > 0 && (
+        <section className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
+          <div className="px-5 py-4 border-b border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Credit Summary</h3>
+          </div>
+          <div className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
+                <p className="text-sm text-purple-600 dark:text-purple-400 font-medium">Total Outstanding Credits</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(totalOutstandingCredits, currency)}</p>
+              </div>
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                <p className="text-sm text-green-600 dark:text-green-400 font-medium">Total Collected Payments</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(totalCollectedCreditPayments, currency)}</p>
+              </div>
+              <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4">
+                <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">Active Credit Accounts</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{activeCreditAccounts}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   )
 }

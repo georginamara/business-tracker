@@ -5,7 +5,7 @@ import { useBusiness } from '../hooks/useBusiness'
 import { useStore } from '../hooks/useStore'
 import type { Product } from '../data/products'
 import { fetchAll, createDocument, updateDocument, deleteDocument } from '../lib/firestore'
-import { seedDatabase } from '../lib/seed'
+import { loadDefaultProducts } from '../lib/demoDataGenerator'
 import ProductFormModal from '../components/ProductFormModal'
 import RestockModal from '../components/RestockModal'
 import AdjustmentModal from '../components/AdjustmentModal'
@@ -21,13 +21,15 @@ export default function Products() {
 
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [seeding, setSeeding] = useState(false)
   const [search, setSearch] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [restockTarget, setRestockTarget] = useState<Product | null>(null)
   const [adjustTarget, setAdjustTarget] = useState<Product | null>(null)
+  const [loadConfirmOpen, setLoadConfirmOpen] = useState(false)
+  const [loadConfirmLoading, setLoadConfirmLoading] = useState(false)
+  const [existingCount, setExistingCount] = useState(0)
 
   useEffect(() => {
     if (!uid) return
@@ -42,14 +44,20 @@ export default function Products() {
 
   const handleSeed = async () => {
     if (!uid) return
-    setSeeding(true)
+    setLoadConfirmLoading(true)
     try {
-      await seedDatabase(uid)
+      await loadDefaultProducts(uid)
       const data = await fetchAll<Product>('products', where('ownerId', '==', uid))
       setProducts(data)
     } finally {
-      setSeeding(false)
+      setLoadConfirmLoading(false)
+      setLoadConfirmOpen(false)
     }
+  }
+
+  const openLoadDefaults = () => {
+    setExistingCount(products.length)
+    setLoadConfirmOpen(true)
   }
 
   const handleSave = async (data: Omit<Product, 'id'>) => {
@@ -87,27 +95,27 @@ export default function Products() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Products</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Products</h2>
         <div className="flex gap-2">
           <button
-            onClick={handleSeed}
-            disabled={seeding}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-150 shadow-sm"
+            onClick={openLoadDefaults}
+            disabled={loadConfirmLoading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 active:bg-emerald-200 dark:active:bg-emerald-900/40 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-all duration-150 shadow-sm"
           >
-            {seeding ? (
+            {loadConfirmLoading ? (
               <>
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Seeding…
+                Loading…
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                Seed Database
+                Load Default Products
               </>
             )}
           </button>
@@ -124,7 +132,7 @@ export default function Products() {
       </div>
 
       <div className="relative w-full sm:max-w-sm">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         <input
@@ -132,12 +140,12 @@ export default function Products() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search products..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white"
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-slate-600 text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow bg-white"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,11 +155,11 @@ export default function Products() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm p-5">
           <TableSkeleton rows={5} cols={5} />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm">
           <EmptyState
             icon={
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,24 +172,24 @@ export default function Products() {
               !search ? (
                 <div className="flex gap-2 justify-center">
                   <button
-                    onClick={handleSeed}
-                    disabled={seeding}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
+                    onClick={openLoadDefaults}
+                    disabled={loadConfirmLoading}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors shadow-sm"
                   >
-                    {seeding ? (
+                    {loadConfirmLoading ? (
                       <>
                         <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Seeding…
+                        Loading…
                       </>
                     ) : (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                         </svg>
-                        Seed Database
+                        Load Default Products
                       </>
                     )}
                   </button>
@@ -200,11 +208,11 @@ export default function Products() {
           />
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm table-card">
               <thead>
-                <tr className="text-left text-gray-500 font-medium border-b border-gray-200 bg-gray-50/50">
+                <tr className="text-left text-gray-500 dark:text-slate-400 font-medium border-b border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-700/50">
                   <th className="px-5 py-4">Product Name</th>
                   <th className="px-5 py-4">Category</th>
                   <th className="px-5 py-4">Price</th>
@@ -212,27 +220,27 @@ export default function Products() {
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
                 {filtered.map((product) => (
-                  <tr key={product.id} className="transition-colors hover:bg-gray-50 group">
-                    <td className="px-5 py-4 font-medium text-gray-900" data-label="Product">{product.name}</td>
+                  <tr key={product.id} className="transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/50 group">
+                    <td className="px-5 py-4 font-medium text-gray-900 dark:text-white" data-label="Product">{product.name}</td>
                     <td className="px-5 py-4" data-label="Category">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300">
                         {product.category}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-900 font-medium" data-label="Price">
+                    <td className="px-5 py-4 text-gray-900 dark:text-white font-medium" data-label="Price">
                       ${product.price.toFixed(2)}
                     </td>
                     <td className="px-5 py-4" data-label="Stock">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         product.stock <= threshold
-                          ? 'bg-red-50 text-red-700'
+                          ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
                           : product.stock <= threshold * 3
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-green-50 text-green-700'
+                          ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                          : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
                       }`}>
-                        {product.stock <= threshold && <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />}
+                        {product.stock <= threshold && <span className="w-1.5 h-1.5 rounded-full bg-red-500 dark:bg-red-400 animate-pulse" />}
                         {product.stock}
                       </span>
                     </td>
@@ -240,25 +248,25 @@ export default function Products() {
                       <div className="inline-flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
                         <button
                           onClick={() => setAdjustTarget(product)}
-                          className="px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 active:bg-amber-200 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 active:bg-amber-200 dark:active:bg-amber-900/40 rounded-lg transition-colors"
                         >
                           Adjust
                         </button>
                         <button
                           onClick={() => setRestockTarget(product)}
-                          className="px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 active:bg-emerald-200 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 active:bg-emerald-200 dark:active:bg-emerald-900/40 rounded-lg transition-colors"
                         >
                           Restock
                         </button>
                         <button
                           onClick={() => handleEdit(product)}
-                          className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 active:bg-indigo-200 dark:active:bg-indigo-900/40 rounded-lg transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => setDeleteTarget(product)}
-                          className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 hover:bg-red-100 active:bg-red-200 rounded-lg transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:bg-red-900/30 dark:hover:bg-red-900/30 active:bg-red-200 dark:active:bg-red-900/40 rounded-lg transition-colors"
                         >
                           Delete
                         </button>
@@ -269,7 +277,7 @@ export default function Products() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
+          <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-400 flex items-center justify-between">
             <span>{filtered.length} product{filtered.length !== 1 ? 's' : ''}</span>
             {search && <span>Filtered by: &quot;{search}&quot;</span>}
           </div>
@@ -306,20 +314,20 @@ export default function Products() {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 mb-4 mx-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 mb-4 mx-auto">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">Delete Product</h3>
-            <p className="text-sm text-gray-500 text-center mb-6">
-              Are you sure you want to delete <strong className="text-gray-700">{deleteTarget.name}</strong>? This action cannot be undone.
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Delete Product</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 text-center mb-6">
+              Are you sure you want to delete <strong className="text-gray-700 dark:text-slate-300">{deleteTarget.name}</strong>? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -328,6 +336,57 @@ export default function Products() {
                 className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-colors shadow-sm"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loadConfirmOpen && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+          onClick={() => { if (!loadConfirmLoading) setLoadConfirmOpen(false) }}
+        >
+          <div
+            className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-sm p-6 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 mb-4 mx-auto">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center mb-2">Load Default Products</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 text-center mb-6">
+              {existingCount > 0
+                ? `You already have ${existingCount} product${existingCount !== 1 ? 's' : ''}. Loading defaults will add new products and may create duplicates.`
+                : `This will import default products for your business type into your catalog.`
+              }
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setLoadConfirmOpen(false)}
+                disabled={loadConfirmLoading}
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSeed}
+                disabled={loadConfirmLoading}
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-colors shadow-sm disabled:opacity-50"
+              >
+                {loadConfirmLoading ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading…
+                  </>
+                ) : (
+                  'Load Products'
+                )}
               </button>
             </div>
           </div>

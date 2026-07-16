@@ -1,3 +1,5 @@
+import type { Timestamp } from 'firebase/firestore'
+
 export interface Expense {
   id: string
   description: string
@@ -5,7 +7,7 @@ export interface Expense {
   amount: number
   date: string
   notes?: string
-  createdAt: string
+  createdAt: Timestamp
 }
 
 export const expenseCategories = [

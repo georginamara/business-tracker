@@ -62,15 +62,15 @@ export default function RestockModal({ open, product, onRestock, onClose }: Rest
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 animate-scale-in max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-gray-900">Restock Product</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Restock Product</h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1 rounded-md text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -80,27 +80,27 @@ export default function RestockModal({ open, product, onRestock, onClose }: Rest
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Product Name</label>
             <input
               type="text"
               value={product.name}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-500 bg-gray-50 cursor-not-allowed"
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2.5 text-sm text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700 cursor-not-allowed"
               readOnly
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Current Stock</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Current Stock</label>
             <input
               type="text"
               value={product.stock}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-500 bg-gray-50 cursor-not-allowed"
+              className="w-full rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2.5 text-sm text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-700 cursor-not-allowed"
               readOnly
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
               Quantity to Add <span className="text-red-500">*</span>
             </label>
             <input
@@ -109,8 +109,8 @@ export default function RestockModal({ open, product, onRestock, onClose }: Rest
               step="1"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow ${
-                qtyError ? 'border-red-400 bg-red-50' : 'border-gray-300'
+              className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow dark:bg-slate-700 dark:text-white ${
+                qtyError ? 'border-red-400 bg-red-50 dark:border-red-500 dark:bg-red-900/20' : 'border-gray-300 dark:border-slate-600'
               }`}
               placeholder="e.g. 50"
               required
@@ -121,29 +121,29 @@ export default function RestockModal({ open, product, onRestock, onClose }: Rest
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Supplier</label>
             <input
               type="text"
               value={supplier}
               onChange={(e) => setSupplier(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow dark:bg-slate-700 dark:text-white"
               placeholder="Optional"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow resize-none"
+              className="w-full rounded-lg border border-gray-300 dark:border-slate-600 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 transition-shadow resize-none dark:bg-slate-700 dark:text-white"
               placeholder="Optional"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-sm text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
@@ -153,7 +153,7 @@ export default function RestockModal({ open, product, onRestock, onClose }: Rest
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-lg transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
