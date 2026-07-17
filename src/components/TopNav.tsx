@@ -20,7 +20,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
   const { user, logout } = useAuth()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const title = pageTitles[location.pathname] || 'Business Tracker'
+  const title = pageTitles[location.pathname] || 'GeoDesk'
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -48,7 +48,7 @@ export default function TopNav({ onMenuClick }: TopNavProps) {
       </button>
 
       <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-        <span>Business Tracker</span>
+        <span>GeoDesk</span>
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>

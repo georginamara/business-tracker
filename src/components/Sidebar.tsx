@@ -85,10 +85,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         `}
       >
         <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-200">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-            B
+          <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+            G
           </div>
-          <span className="text-base font-semibold text-gray-900">Business Tracker</span>
+          <div className="flex flex-col">
+            <span className="text-base font-semibold text-gray-900">GeoDesk</span>
+            <span className="text-[10px] text-gray-400 leading-tight">Business Management Platform</span>
+          </div>
         </div>
 
         <div className="flex flex-col h-[calc(100%-4rem)]">

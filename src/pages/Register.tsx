@@ -2,8 +2,22 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
+const BUSINESS_TYPES = [
+  'Sari-sari Store',
+  'Restaurant',
+  'Café',
+  'Bakery',
+  'Grocery',
+  'Pharmacy',
+  'Retail Store',
+  'Online Shop',
+  'Wholesale',
+  'Others',
+] as const
+
 export default function Register() {
   const { register } = useAuth()
+  const [businessType, setBusinessType] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -13,6 +27,11 @@ export default function Register() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!businessType) {
+      setError('Please select a business type')
+      return
+    }
 
     if (password !== confirm) {
       setError('Passwords do not match')
@@ -26,7 +45,7 @@ export default function Register() {
 
     setSubmitting(true)
     try {
-      await register(email, password)
+      await register(email, password, businessType)
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Registration failed')
     } finally {
@@ -38,11 +57,12 @@ export default function Register() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-4">
-            B
+          <div className="w-12 h-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-xl font-bold mx-auto mb-4">
+            G
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
-          <p className="text-sm text-gray-500 mt-1">Get started with Business Tracker</p>
+          <p className="text-sm text-gray-500 mt-1">Business Management Platform</p>
+          <p className="text-xs text-gray-400">by Georgi</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
@@ -51,6 +71,22 @@ export default function Register() {
               {error}
             </div>
           )}
+
+          <div>
+            <label htmlFor="businessType" className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+            <select
+              id="businessType"
+              required
+              value={businessType}
+              onChange={(e) => setBusinessType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="" disabled>Select your business type</option>
+              {BUSINESS_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>

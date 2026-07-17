@@ -7,13 +7,14 @@ import {
   sendPasswordResetEmail,
   type User,
 } from 'firebase/auth'
-import { auth } from '../lib/firebase'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { auth, db } from '../lib/firebase'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, businessType: string) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
 }
@@ -36,8 +37,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
-  const register = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password)
+  const register = async (email: string, password: string, businessType: string) => {
+    const credential = await createUserWithEmailAndPassword(auth, email, password)
+    await setDoc(doc(db, 'users', credential.user.uid), {
+      email,
+      businessType,
+      plan: 'Starter',
+      status: 'active',
+      createdAt: serverTimestamp(),
+    })
   }
 
   const logout = async () => {
