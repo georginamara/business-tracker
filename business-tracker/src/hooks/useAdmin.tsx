@@ -28,6 +28,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    setLoading(true)
     const adminRef = doc(db, 'admins', uid)
 
     const unsub = onSnapshot(adminRef, (snap) => {

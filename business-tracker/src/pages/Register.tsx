@@ -51,7 +51,7 @@ export default function Register() {
         })
       }
 
-      navigate('/', { replace: true })
+      navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Registration failed')
     } finally {

@@ -113,7 +113,7 @@ export default function UpgradePlan() {
             Contact us to subscribe, change plans, or ask any questions about our pricing.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg transition-colors shadow-sm"
           >
             Contact Business Tracker

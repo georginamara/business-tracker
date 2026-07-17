@@ -31,6 +31,7 @@ import AccountDisabled from './pages/AccountDisabled'
 import AboutPage from './pages/AboutPage'
 import Subscription from './pages/Subscription'
 import UpgradePlan from './pages/UpgradePlan'
+import LandingPage from './pages/LandingPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -59,7 +60,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (user) return <Navigate to={isSuperAdmin ? '/admin' : '/'} replace />
+  if (user) return <Navigate to={isSuperAdmin ? '/admin' : '/dashboard'} replace />
   return <>{children}</>
 }
 
@@ -76,7 +77,7 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) return <Navigate to="/login" replace />
-  if (!isSuperAdmin) return <Navigate to="/" replace />
+  if (!isSuperAdmin) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
@@ -107,6 +108,22 @@ function PlanGuardRoute({ feature, children }: { feature: PermissionKey; childre
   return <>{children}</>
 }
 
+function LandingRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  const { isSuperAdmin, loading: adminLoading } = useAdmin()
+
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (user) return <Navigate to={isSuperAdmin ? '/admin' : '/dashboard'} replace />
+  return <>{children}</>
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -117,8 +134,10 @@ function AppRoutes() {
       <Route path="/account-suspended" element={<ProtectedRoute><AccountSuspended /></ProtectedRoute>} />
       <Route path="/account-disabled" element={<ProtectedRoute><AccountDisabled /></ProtectedRoute>} />
 
+      <Route index element={<LandingRoute><LandingPage /></LandingRoute>} />
+
       <Route element={<ProtectedRoute><BusinessOnlyRoute><MainLayout /></BusinessOnlyRoute></ProtectedRoute>}>
-        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="upgrade" element={<UpgradePlan />} />
         <Route path="pos" element={<POS />} />
         <Route path="products" element={<Products />} />
