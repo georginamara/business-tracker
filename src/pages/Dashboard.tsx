@@ -1,16 +1,104 @@
 import { useMemo } from 'react'
 import { useBusiness } from '../hooks/useBusiness'
 import { useStore } from '../hooks/useStore'
+import { useAuth } from '../hooks/useAuth'
 import DashboardCard from '../components/DashboardCard'
 import { CardSkeleton } from '../components/Skeleton'
 import SalesOverviewChart from '../components/SalesOverviewChart'
 import RevenueExpensesChart from '../components/RevenueExpensesChart'
 import ExpenseCategoriesChart from '../components/ExpenseCategoriesChart'
+import { CreditCard, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 
 function formatCurrency(amount: number, currency = '$'): string {
   const symbols: Record<string, string> = { PHP: '₱', USD: '$', EUR: '€', GBP: '£', JPY: '¥' }
   const sym = symbols[currency] || '$'
   return `${sym}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function toSubDate(val: unknown): Date | null {
+  if (!val) return null
+  if (val instanceof Date) return val
+  if (typeof val === 'string') return new Date(val)
+  if (typeof val === 'object' && val !== null && 'toDate' in val) {
+    return (val as { toDate: () => Date }).toDate()
+  }
+  return null
+}
+
+function SubscriptionBanner() {
+  const { profile } = useAuth()
+  const sub = profile?.subscription
+  if (!sub) return null
+
+  const now = new Date()
+  const isTrial = sub.status === 'trial'
+  const isActive = sub.status === 'active'
+  const isExpired = sub.status === 'expired'
+  const isCancelled = sub.status === 'cancelled'
+
+  const endDate = toSubDate(isTrial ? sub.trialEnd : sub.subscriptionEnd)
+  const daysLeft = endDate ? Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86400000)) : 0
+  const expiryDate = endDate ? endDate.toLocaleDateString() : '—'
+
+  if (isCancelled) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center"><Clock size={20} className="text-slate-500" /></div>
+        <div>
+          <p className="text-sm font-semibold text-slate-700">Subscription Cancelled</p>
+          <p className="text-xs text-slate-500">Contact support to reactivate your account.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isExpired) {
+    return (
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center"><AlertTriangle size={20} className="text-red-500" /></div>
+        <div>
+          <p className="text-sm font-semibold text-red-700">Subscription Expired</p>
+          <p className="text-xs text-red-500">Renew your subscription to continue using all features.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTrial) {
+    return (
+      <div className={`rounded-xl border p-4 flex items-center gap-3 ${daysLeft <= 3 ? 'border-amber-200 bg-amber-50' : 'border-blue-200 bg-blue-50'}`}>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${daysLeft <= 3 ? 'bg-amber-100' : 'bg-blue-100'}`}>
+          <Clock size={20} className={daysLeft <= 3 ? 'text-amber-600' : 'text-blue-600'} />
+        </div>
+        <div>
+          <p className={`text-sm font-semibold ${daysLeft <= 3 ? 'text-amber-700' : 'text-blue-700'}`}>
+            {sub.plan} Trial — {daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining
+          </p>
+          <p className={`text-xs ${daysLeft <= 3 ? 'text-amber-500' : 'text-blue-500'}`}>
+            Trial ends {expiryDate}. Upgrade to a paid plan for full access.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isActive) {
+    return (
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center"><CheckCircle size={20} className="text-emerald-600" /></div>
+        <div>
+          <p className="text-sm font-semibold text-emerald-700">
+            {sub.plan} Plan — Active
+          </p>
+          <p className="text-xs text-emerald-500">
+            Expires {expiryDate} · {daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return null
 }
 
 export default function Dashboard() {
@@ -61,6 +149,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <h2 className="text-2xl font-bold text-gray-900">{store?.storeName ? `Welcome back, ${store.storeName}` : 'Dashboard'}</h2>
+
+      <SubscriptionBanner />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <DashboardCard

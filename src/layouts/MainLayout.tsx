@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar'
 import TopNav from '../components/TopNav'
 
 export default function MainLayout() {
+  console.log('MainLayout rendered')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (

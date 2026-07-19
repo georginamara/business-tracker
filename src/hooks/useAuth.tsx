@@ -7,11 +7,34 @@ import {
   sendPasswordResetEmail,
   type User,
 } from 'firebase/auth'
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '../lib/firebase'
+
+export type UserRole = 'owner' | 'super_admin'
+
+export interface Subscription {
+  plan: string
+  status: string
+  trialStart: unknown | null
+  trialEnd: unknown | null
+  subscriptionStart: unknown | null
+  subscriptionEnd: unknown | null
+  billingCycle: string
+  autoRenew: boolean
+}
+
+export interface UserProfile {
+  email: string
+  role: UserRole
+  status: string
+  plan?: string
+  businessType?: string
+  subscription?: Subscription
+}
 
 interface AuthContextType {
   user: User | null
+  profile: UserProfile | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, businessType: string) => Promise<void>
@@ -21,13 +44,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+function createTrialSubscription(): Subscription {
+  const now = new Date()
+  const trialEnd = new Date(now)
+  trialEnd.setDate(trialEnd.getDate() + 14)
+  return {
+    plan: 'Starter',
+    status: 'trial',
+    trialStart: now.toISOString(),
+    trialEnd: trialEnd.toISOString(),
+    subscriptionStart: null,
+    subscriptionEnd: null,
+    billingCycle: 'monthly',
+    autoRenew: false,
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser)
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
+          if (snap.exists()) {
+            const data = snap.data() as UserProfile
+            console.log('AUTH PROFILE:', { uid: firebaseUser.uid, profile: data, role: data.role })
+            setProfile(data)
+          } else {
+            console.log('AUTH PROFILE: no document for', firebaseUser.uid)
+            setProfile(null)
+          }
+        } catch (err) {
+          console.log('AUTH PROFILE: fetch error', err)
+          setProfile(null)
+        }
+        setUser(firebaseUser)
+      } else {
+        setProfile(null)
+        setUser(null)
+      }
       setLoading(false)
     })
     return unsubscribe
@@ -42,9 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setDoc(doc(db, 'users', credential.user.uid), {
       email,
       businessType,
+      role: 'owner',
       plan: 'Starter',
       status: 'active',
       createdAt: serverTimestamp(),
+      subscription: createTrialSubscription(),
     })
   }
 
@@ -57,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword }}>
+    <AuthContext.Provider value={{ user, profile, loading, login, register, logout, resetPassword }}>
       {children}
     </AuthContext.Provider>
   )

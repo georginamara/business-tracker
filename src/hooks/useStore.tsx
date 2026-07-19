@@ -14,7 +14,7 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null)
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const uid = user?.uid
   const email = user?.email || ''
 
@@ -22,6 +22,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (profile?.role === 'super_admin') {
+      setStore(null)
+      setLoading(false)
+      return
+    }
+
     if (!uid) {
       setStore(null)
       setLoading(true)
@@ -50,7 +56,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     })
 
     return unsub
-  }, [uid, email])
+  }, [uid, email, profile])
 
   const updateStore = useCallback(async (data: Partial<Omit<Store, 'ownerId' | 'createdAt' | 'updatedAt'>>) => {
     if (!uid) throw new Error('Not authenticated')
