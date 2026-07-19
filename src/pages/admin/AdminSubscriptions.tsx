@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useAdmin, type OwnerUser, toDate, computeDaysRemaining } from '../../hooks/useAdmin'
 import {
   Search, Filter, ArrowUpDown, CreditCard, CalendarPlus,
-  RefreshCw, Clock, Ban, AlertTriangle, CheckSquare,
+  RefreshCw, Clock, Ban, AlertTriangle,
 } from 'lucide-react'
 
 export default function AdminSubscriptions() {

@@ -7,7 +7,7 @@ import { CardSkeleton } from '../components/Skeleton'
 import SalesOverviewChart from '../components/SalesOverviewChart'
 import RevenueExpensesChart from '../components/RevenueExpensesChart'
 import ExpenseCategoriesChart from '../components/ExpenseCategoriesChart'
-import { CreditCard, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 
 function formatCurrency(amount: number, currency = '$'): string {
   const symbols: Record<string, string> = { PHP: '₱', USD: '$', EUR: '€', GBP: '£', JPY: '¥' }

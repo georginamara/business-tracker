@@ -2,8 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAdmin, type OwnerUser, toDate, computeDaysRemaining } from '../../hooks/useAdmin'
 import {
-  Search, Filter, Eye, Pause, Play, Trash2, X, CreditCard,
-  CalendarPlus, RefreshCw, Clock, Ban, AlertTriangle, MoreVertical,
+  Search, Filter, Eye, Pause, Trash2, X, CreditCard,
+  CalendarPlus, RefreshCw, Clock, AlertTriangle, MoreVertical,
 } from 'lucide-react'
 
 type ModalState =
@@ -18,7 +18,7 @@ type ModalState =
 
 export default function AdminUsers() {
   const {
-    owners, loading, suspendUser, activateUser, deleteUser,
+    owners, loading, suspendUser, deleteUser,
     activateSubscription, extendTrial, renewSubscription, expireSubscription,
   } = useAdmin()
   const [search, setSearch] = useState('')
@@ -71,7 +71,7 @@ export default function AdminUsers() {
   })
 
   const handleConfirm = async () => {
-    if (modal.type === 'view') return
+    if (modal.type === null || modal.type === 'view') return
     const u = modal.user
     setProcessing(true)
     try {
