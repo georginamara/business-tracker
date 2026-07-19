@@ -37,19 +37,19 @@ interface AuthContextType {
   profile: UserProfile | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, businessType: string) => Promise<void>
+  register: (email: string, password: string, businessType: string, plan: string) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-function createTrialSubscription(): Subscription {
+function createTrialSubscription(plan: string): Subscription {
   const now = new Date()
   const trialEnd = new Date(now)
   trialEnd.setDate(trialEnd.getDate() + 14)
   return {
-    plan: 'Starter',
+    plan,
     status: 'trial',
     trialStart: now.toISOString(),
     trialEnd: trialEnd.toISOString(),
@@ -96,16 +96,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
-  const register = async (email: string, password: string, businessType: string) => {
+  const register = async (email: string, password: string, businessType: string, plan: string) => {
     const credential = await createUserWithEmailAndPassword(auth, email, password)
     await setDoc(doc(db, 'users', credential.user.uid), {
       email,
       businessType,
       role: 'owner',
-      plan: 'Starter',
+      plan,
       status: 'active',
       createdAt: serverTimestamp(),
-      subscription: createTrialSubscription(),
+      subscription: createTrialSubscription(plan),
     })
   }
 

@@ -18,6 +18,7 @@ const BUSINESS_TYPES = [
 export default function Register() {
   const { register } = useAuth()
   const [businessType, setBusinessType] = useState('')
+  const [plan, setPlan] = useState('Starter')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -45,7 +46,7 @@ export default function Register() {
 
     setSubmitting(true)
     try {
-      await register(email, password, businessType)
+      await register(email, password, businessType, plan)
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Registration failed')
     } finally {
@@ -86,6 +87,34 @@ export default function Register() {
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Subscription Plan</label>
+            <div className="grid grid-cols-2 gap-3">
+              {(['Starter', 'Business'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlan(p)}
+                  className={`relative rounded-lg border-2 p-3 text-left transition-all ${
+                    plan === p
+                      ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500/20'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  {plan === p && (
+                    <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    </span>
+                  )}
+                  <p className="text-sm font-semibold text-gray-900">{p}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{p === 'Business' ? '₱299/mo' : '₱149/mo'}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
